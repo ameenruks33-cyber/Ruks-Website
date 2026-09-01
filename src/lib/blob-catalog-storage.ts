@@ -4,7 +4,11 @@ import type { StoreCatalogData } from "@/lib/store-data-types";
 const BLOB_PATHNAME = "rukza/store-catalog.json";
 
 export function isBlobStorageEnabled(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  return Boolean(
+    process.env.BLOB_READ_WRITE_TOKEN ||
+    process.env.BLOB_STORE_ID ||
+    (process.env.VERCEL && process.env.VERCEL_OIDC_TOKEN)
+  );
 }
 
 export async function readCatalogFromBlob(): Promise<StoreCatalogData | null> {
@@ -22,7 +26,9 @@ export async function readCatalogFromBlob(): Promise<StoreCatalogData | null> {
 
 export async function writeCatalogToBlob(data: StoreCatalogData): Promise<void> {
   if (!isBlobStorageEnabled()) {
-    throw new Error("BLOB_READ_WRITE_TOKEN is not configured");
+    throw new Error(
+      "Blob storage is not connected. Run setup-vercel-auto.ps1 or connect Blob in Vercel dashboard."
+    );
   }
 
   await put(BLOB_PATHNAME, JSON.stringify(data), {

@@ -7,11 +7,14 @@ import {
   coupons as seedCoupons,
 } from "@/data/store";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
+import {
+  isBlobStorageEnabled,
+  readCatalogFromBlob,
+  writeCatalogToBlob,
+} from "@/lib/blob-catalog-storage";
 import type { StoreCatalogData, StoreCatalogPatch } from "@/lib/store-data-types";
 
-const DATA_DIR = process.env.VERCEL
-  ? path.join("/tmp", "rukza-data")
-  : path.join(process.cwd(), "data");
+const DATA_DIR = path.join(process.cwd(), "data");
 const CATALOG_FILE = path.join(DATA_DIR, "store-catalog.json");
 
 const globalCache = globalThis as typeof globalThis & {
@@ -29,6 +32,19 @@ function getSeedData(): StoreCatalogData {
   };
 }
 
+function normalizeCatalog(parsed: StoreCatalogData): StoreCatalogData {
+  return {
+    ...getSeedData(),
+    ...parsed,
+    products: parsed.products ?? seedProducts,
+    categories: parsed.categories ?? seedCategories,
+    banners: parsed.banners ?? seedBanners,
+    coupons: parsed.coupons ?? seedCoupons,
+    settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
+    updatedAt: parsed.updatedAt ?? new Date().toISOString(),
+  };
+}
+
 async function ensureCatalogFile(): Promise<void> {
   await fs.mkdir(DATA_DIR, { recursive: true });
   try {
@@ -37,7 +53,6 @@ async function ensureCatalogFile(): Promise<void> {
     const seed = getSeedData();
     seed.updatedAt = new Date().toISOString();
     await fs.writeFile(CATALOG_FILE, JSON.stringify(seed, null, 2), "utf-8");
-    globalCache.__rukzaCatalogCache__ = seed;
   }
 }
 
@@ -45,20 +60,15 @@ async function readCatalogFile(): Promise<StoreCatalogData | null> {
   try {
     await ensureCatalogFile();
     const raw = await fs.readFile(CATALOG_FILE, "utf-8");
-    const parsed = JSON.parse(raw) as StoreCatalogData;
-    return {
-      ...getSeedData(),
-      ...parsed,
-      products: parsed.products ?? seedProducts,
-      categories: parsed.categories ?? seedCategories,
-      banners: parsed.banners ?? seedBanners,
-      coupons: parsed.coupons ?? seedCoupons,
-      settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
-      updatedAt: parsed.updatedAt ?? new Date().toISOString(),
-    };
+    return normalizeCatalog(JSON.parse(raw) as StoreCatalogData);
   } catch {
     return null;
   }
+}
+
+async function writeCatalogFile(data: StoreCatalogData): Promise<void> {
+  await ensureCatalogFile();
+  await fs.writeFile(CATALOG_FILE, JSON.stringify(data, null, 2), "utf-8");
 }
 
 async function readCatalog(): Promise<StoreCatalogData> {
@@ -66,10 +76,21 @@ async function readCatalog(): Promise<StoreCatalogData> {
     return globalCache.__rukzaCatalogCache__;
   }
 
-  const fromFile = await readCatalogFile();
-  if (fromFile) {
-    globalCache.__rukzaCatalogCache__ = fromFile;
-    return fromFile;
+  if (isBlobStorageEnabled()) {
+    const fromBlob = await readCatalogFromBlob();
+    if (fromBlob) {
+      const catalog = normalizeCatalog(fromBlob);
+      globalCache.__rukzaCatalogCache__ = catalog;
+      return catalog;
+    }
+  }
+
+  if (!process.env.VERCEL) {
+    const fromFile = await readCatalogFile();
+    if (fromFile) {
+      globalCache.__rukzaCatalogCache__ = fromFile;
+      return fromFile;
+    }
   }
 
   const seed = getSeedData();
@@ -80,12 +101,25 @@ async function readCatalog(): Promise<StoreCatalogData> {
 
 async function writeCatalog(data: StoreCatalogData): Promise<void> {
   globalCache.__rukzaCatalogCache__ = data;
-  try {
-    await ensureCatalogFile();
-    await fs.writeFile(CATALOG_FILE, JSON.stringify(data, null, 2), "utf-8");
-  } catch {
-    // On read-only environments keep in-memory cache for warm instances.
+
+  if (isBlobStorageEnabled()) {
+    await writeCatalogToBlob(data);
+    return;
   }
+
+  if (process.env.VERCEL) {
+    throw new Error(
+      "Vercel Blob is not connected. Add Blob storage in Vercel project settings so admin changes save on the live website."
+    );
+  }
+
+  await writeCatalogFile(data);
+}
+
+export function getCatalogStorageMode(): "blob" | "file" | "memory" {
+  if (isBlobStorageEnabled()) return "blob";
+  if (!process.env.VERCEL) return "file";
+  return "memory";
 }
 
 export async function getStoreCatalog(): Promise<StoreCatalogData> {

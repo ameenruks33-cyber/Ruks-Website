@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type { Banner, Category, Coupon, Product } from "@/types";
 import {
   products as seedProducts,
@@ -10,12 +9,14 @@ import {
   coupons as seedCoupons,
 } from "@/data/store";
 import { slugify } from "@/lib/utils";
+import { scheduleCatalogSync } from "@/lib/catalog-sync";
 
 interface CatalogState {
   products: Product[];
   categories: Category[];
   banners: Banner[];
   coupons: Coupon[];
+  hydrated: boolean;
 
   getProductBySlug: (slug: string) => Product | undefined;
   getProductById: (id: string) => Product | undefined;
@@ -47,107 +48,121 @@ function filterByCategory(products: Product[], categories: Category[], categoryS
   return products.filter((p) => allSlugs.includes(p.categorySlug) && p.isActive);
 }
 
-export const useCatalogStore = create<CatalogState>()(
-  persist(
-    (set, get) => ({
+export const useCatalogStore = create<CatalogState>()((set, get) => ({
+  products: seedProducts,
+  categories: seedCategories,
+  banners: seedBanners,
+  coupons: seedCoupons,
+  hydrated: false,
+
+  getProductBySlug: (slug) => get().products.find((p) => p.slug === slug),
+  getProductById: (id) => get().products.find((p) => p.id === id),
+
+  getProductsByCategory: (categorySlug) =>
+    filterByCategory(get().products, get().categories, categorySlug),
+
+  getFeaturedProducts: () =>
+    get().products.filter((p) => p.isFeatured && p.isActive),
+
+  getNewArrivals: () => get().products.filter((p) => p.isNew && p.isActive),
+
+  getOnSaleProducts: () =>
+    get().products.filter((p) => p.salePrice && p.isActive),
+
+  searchProducts: (query) => {
+    const q = query.toLowerCase();
+    return get().products.filter(
+      (p) =>
+        p.isActive &&
+        (p.name.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          p.tags.some((t) => t.includes(q)) ||
+          p.categoryName.toLowerCase().includes(q))
+    );
+  },
+
+  updateProduct: (id, data) => {
+    set((state) => ({
+      products: state.products.map((p) => {
+        if (p.id !== id) return p;
+        const updated = { ...p, ...data };
+        if (data.name && data.name !== p.name) {
+          updated.slug = slugify(data.name);
+        }
+        if (data.categorySlug) {
+          const cat = state.categories.find((c) => c.slug === data.categorySlug);
+          if (cat) {
+            updated.categoryId = cat.id;
+            updated.categoryName = cat.name;
+          }
+        }
+        return updated;
+      }),
+    }));
+    scheduleCatalogSync();
+  },
+
+  addProduct: (product) => {
+    set((state) => ({ products: [...state.products, product] }));
+    scheduleCatalogSync();
+  },
+
+  deleteProduct: (id) => {
+    set((state) => ({ products: state.products.filter((p) => p.id !== id) }));
+    scheduleCatalogSync();
+  },
+
+  updateCategory: (id, data) => {
+    set((state) => ({
+      categories: state.categories.map((c) =>
+        c.id === id ? { ...c, ...data } : c
+      ),
+    }));
+    scheduleCatalogSync();
+  },
+
+  updateBanner: (id, data) => {
+    set((state) => ({
+      banners: state.banners.map((b) => (b.id === id ? { ...b, ...data } : b)),
+    }));
+    scheduleCatalogSync();
+  },
+
+  addCoupon: (coupon) => {
+    set((state) => ({
+      coupons: [...state.coupons, { ...coupon, isActive: coupon.isActive ?? true }],
+    }));
+    scheduleCatalogSync();
+  },
+
+  updateCoupon: (code, data) => {
+    set((state) => ({
+      coupons: state.coupons.map((c) =>
+        c.code.toUpperCase() === code.toUpperCase() ? { ...c, ...data } : c
+      ),
+    }));
+    scheduleCatalogSync();
+  },
+
+  deleteCoupon: (code) => {
+    set((state) => ({
+      coupons: state.coupons.filter(
+        (c) => c.code.toUpperCase() !== code.toUpperCase()
+      ),
+    }));
+    scheduleCatalogSync();
+  },
+
+  resetCatalog: () => {
+    set({
       products: seedProducts,
       categories: seedCategories,
       banners: seedBanners,
       coupons: seedCoupons,
-
-      getProductBySlug: (slug) => get().products.find((p) => p.slug === slug),
-      getProductById: (id) => get().products.find((p) => p.id === id),
-
-      getProductsByCategory: (categorySlug) =>
-        filterByCategory(get().products, get().categories, categorySlug),
-
-      getFeaturedProducts: () =>
-        get().products.filter((p) => p.isFeatured && p.isActive),
-
-      getNewArrivals: () => get().products.filter((p) => p.isNew && p.isActive),
-
-      getOnSaleProducts: () =>
-        get().products.filter((p) => p.salePrice && p.isActive),
-
-      searchProducts: (query) => {
-        const q = query.toLowerCase();
-        return get().products.filter(
-          (p) =>
-            p.isActive &&
-            (p.name.toLowerCase().includes(q) ||
-              p.description.toLowerCase().includes(q) ||
-              p.tags.some((t) => t.includes(q)) ||
-              p.categoryName.toLowerCase().includes(q))
-        );
-      },
-
-      updateProduct: (id, data) =>
-        set((state) => ({
-          products: state.products.map((p) => {
-            if (p.id !== id) return p;
-            const updated = { ...p, ...data };
-            if (data.name && data.name !== p.name) {
-              updated.slug = slugify(data.name);
-            }
-            if (data.categorySlug) {
-              const cat = state.categories.find((c) => c.slug === data.categorySlug);
-              if (cat) {
-                updated.categoryId = cat.id;
-                updated.categoryName = cat.name;
-              }
-            }
-            return updated;
-          }),
-        })),
-
-      addProduct: (product) =>
-        set((state) => ({ products: [...state.products, product] })),
-
-      deleteProduct: (id) =>
-        set((state) => ({ products: state.products.filter((p) => p.id !== id) })),
-
-      updateCategory: (id, data) =>
-        set((state) => ({
-          categories: state.categories.map((c) =>
-            c.id === id ? { ...c, ...data } : c
-          ),
-        })),
-
-      updateBanner: (id, data) =>
-        set((state) => ({
-          banners: state.banners.map((b) => (b.id === id ? { ...b, ...data } : b)),
-        })),
-
-      addCoupon: (coupon) =>
-        set((state) => ({
-          coupons: [...state.coupons, { ...coupon, isActive: coupon.isActive ?? true }],
-        })),
-
-      updateCoupon: (code, data) =>
-        set((state) => ({
-          coupons: state.coupons.map((c) =>
-            c.code.toUpperCase() === code.toUpperCase() ? { ...c, ...data } : c
-          ),
-        })),
-
-      deleteCoupon: (code) =>
-        set((state) => ({
-          coupons: state.coupons.filter(
-            (c) => c.code.toUpperCase() !== code.toUpperCase()
-          ),
-        })),
-
-      resetCatalog: () =>
-        set({
-          products: seedProducts,
-          categories: seedCategories,
-          banners: seedBanners,
-          coupons: seedCoupons,
-        }),
-    }),
-    { name: "rukza-catalog" }
-  )
-);
+    });
+    scheduleCatalogSync();
+  },
+}));
 
 export function validateCoupon(
   code: string,

@@ -45,6 +45,7 @@ yarn-error.log*
 
 # order data (server-side, not in git)
 /data/orders.json
+/data/store-catalog.json
 
 # typescript
 *.tsbuildinfo

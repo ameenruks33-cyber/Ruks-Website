@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { AdminSyncStatus } from "@/components/admin/AdminSyncStatus";
 import {
   LayoutDashboard,
   Package,
@@ -90,6 +91,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p className="hidden lg:block text-xs text-charcoal/40">
             Confidential admin area — not visible to customers
           </p>
+          <AdminSyncStatus />
           <button
             onClick={handleLogout}
             className="text-sm text-charcoal/60 hover:text-burgundy flex items-center gap-1.5"

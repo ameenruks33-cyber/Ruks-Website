@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Save, RotateCcw } from "lucide-react";
 import { useSettingsStore } from "@/store/settings-store";
+import { syncCatalogNow } from "@/lib/catalog-sync";
 import { CURRENCIES } from "@/lib/settings";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -27,8 +28,9 @@ export default function AdminSettingsPage() {
   });
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     settings.updateSettings(form);
+    await syncCatalogNow();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -74,7 +76,7 @@ export default function AdminSettingsPage() {
           </Button>
           <Button onClick={handleSave}>
             <Save size={16} />
-            {saved ? "Saved!" : "Save Changes"}
+            {saved ? "Published!" : "Save Changes"}
           </Button>
         </div>
       </div>

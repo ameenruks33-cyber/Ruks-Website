@@ -1,0 +1,121 @@
+import { promises as fs } from "fs";
+import path from "path";
+import {
+  products as seedProducts,
+  categories as seedCategories,
+  banners as seedBanners,
+  coupons as seedCoupons,
+} from "@/data/store";
+import { DEFAULT_SETTINGS } from "@/lib/settings";
+import type { StoreCatalogData, StoreCatalogPatch } from "@/lib/store-data-types";
+
+const DATA_DIR = process.env.VERCEL
+  ? path.join("/tmp", "rukza-data")
+  : path.join(process.cwd(), "data");
+const CATALOG_FILE = path.join(DATA_DIR, "store-catalog.json");
+
+const globalCache = globalThis as typeof globalThis & {
+  __rukzaCatalogCache__?: StoreCatalogData;
+};
+
+function getSeedData(): StoreCatalogData {
+  return {
+    products: seedProducts,
+    categories: seedCategories,
+    banners: seedBanners,
+    coupons: seedCoupons,
+    settings: DEFAULT_SETTINGS,
+    updatedAt: new Date(0).toISOString(),
+  };
+}
+
+async function ensureCatalogFile(): Promise<void> {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  try {
+    await fs.access(CATALOG_FILE);
+  } catch {
+    const seed = getSeedData();
+    seed.updatedAt = new Date().toISOString();
+    await fs.writeFile(CATALOG_FILE, JSON.stringify(seed, null, 2), "utf-8");
+    globalCache.__rukzaCatalogCache__ = seed;
+  }
+}
+
+async function readCatalogFile(): Promise<StoreCatalogData | null> {
+  try {
+    await ensureCatalogFile();
+    const raw = await fs.readFile(CATALOG_FILE, "utf-8");
+    const parsed = JSON.parse(raw) as StoreCatalogData;
+    return {
+      ...getSeedData(),
+      ...parsed,
+      products: parsed.products ?? seedProducts,
+      categories: parsed.categories ?? seedCategories,
+      banners: parsed.banners ?? seedBanners,
+      coupons: parsed.coupons ?? seedCoupons,
+      settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
+      updatedAt: parsed.updatedAt ?? new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function readCatalog(): Promise<StoreCatalogData> {
+  if (globalCache.__rukzaCatalogCache__) {
+    return globalCache.__rukzaCatalogCache__;
+  }
+
+  const fromFile = await readCatalogFile();
+  if (fromFile) {
+    globalCache.__rukzaCatalogCache__ = fromFile;
+    return fromFile;
+  }
+
+  const seed = getSeedData();
+  seed.updatedAt = new Date().toISOString();
+  globalCache.__rukzaCatalogCache__ = seed;
+  return seed;
+}
+
+async function writeCatalog(data: StoreCatalogData): Promise<void> {
+  globalCache.__rukzaCatalogCache__ = data;
+  try {
+    await ensureCatalogFile();
+    await fs.writeFile(CATALOG_FILE, JSON.stringify(data, null, 2), "utf-8");
+  } catch {
+    // On read-only environments keep in-memory cache for warm instances.
+  }
+}
+
+export async function getStoreCatalog(): Promise<StoreCatalogData> {
+  return readCatalog();
+}
+
+export async function updateStoreCatalog(
+  patch: StoreCatalogPatch
+): Promise<StoreCatalogData> {
+  const current = await readCatalog();
+  const next: StoreCatalogData = {
+    products: patch.products ?? current.products,
+    categories: patch.categories ?? current.categories,
+    banners: patch.banners ?? current.banners,
+    coupons: patch.coupons ?? current.coupons,
+    settings: patch.settings
+      ? { ...current.settings, ...patch.settings }
+      : current.settings,
+    updatedAt: new Date().toISOString(),
+  };
+  await writeCatalog(next);
+  return next;
+}
+
+export async function getProductsFromStore() {
+  const data = await readCatalog();
+  return data.products.filter((p) => p.isActive);
+}
+
+export async function getCategoriesFromStore() {
+  const data = await readCatalog();
+  return data.categories;
+}

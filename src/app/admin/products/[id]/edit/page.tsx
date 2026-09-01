@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import { useCatalogStore } from "@/store/catalog-store";
+import { syncCatalogNow } from "@/lib/catalog-sync";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Price } from "@/components/ui/Price";
@@ -16,9 +17,10 @@ interface EditProductPageProps {
 
 export default function EditProductPage({ params }: EditProductPageProps) {
   const router = useRouter();
-  const { getProductById, updateProduct, categories } = useCatalogStore();
+  const { getProductById, updateProduct, categories, hydrated } = useCatalogStore();
   const [productId, setProductId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -56,7 +58,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         isActive: product.isActive,
       });
     }
-  }, [productId, getProductById]);
+  }, [productId, hydrated, getProductById]);
 
   if (!productId) return <div className="p-8">Loading...</div>;
 
@@ -89,7 +91,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     setForm((prev) => ({ ...prev, images: images.length ? images : [""] }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const images = form.images.filter((url) => url.trim());
     updateProduct(productId, {
       name: form.name,
@@ -104,6 +106,14 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       isNew: form.isNew,
       isActive: form.isActive,
     });
+
+    const published = await syncCatalogNow();
+    if (!published) {
+      setSaveError("Saved locally but failed to publish. Check you are logged in to admin.");
+      return;
+    }
+
+    setSaveError("");
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -122,9 +132,12 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         <h1 className="font-display text-3xl font-bold text-charcoal">Edit Product</h1>
         <Button onClick={handleSave}>
           <Save size={16} />
-          {saved ? "Saved!" : "Save Changes"}
+          {saved ? "Published!" : "Save & Publish"}
         </Button>
       </div>
+      {saveError && (
+        <p className="text-sm text-red-500 mb-4">{saveError}</p>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">

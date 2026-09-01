@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import { SITE } from "@/lib/constants";
+import { StoreProvider } from "@/components/providers/StoreProvider";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -50,7 +51,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable} h-full`}>
-      <body className="min-h-full antialiased">{children}</body>
+      <body className="min-h-full antialiased">
+        <StoreProvider>{children}</StoreProvider>
+      </body>
     </html>
   );
 }

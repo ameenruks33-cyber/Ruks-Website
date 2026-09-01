@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Pencil, Save } from "lucide-react";
 import { useCatalogStore } from "@/store/catalog-store";
+import { syncCatalogNow } from "@/lib/catalog-sync";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -25,13 +26,14 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingId) return;
     updateCategory(editingId, {
       name: form.name,
       description: form.description || undefined,
       image: form.image || undefined,
     });
+    await syncCatalogNow();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };

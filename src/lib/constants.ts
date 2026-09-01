@@ -14,6 +14,7 @@ export const SITE = {
 } as const;
 
 export const NAV_LINKS = [
+  { label: "Abayas", href: "/shop?category=abayas" },
   { label: "Ladies", href: "/shop?category=ladies" },
   { label: "Gents", href: "/shop?category=gents" },
   { label: "Kids", href: "/shop?category=children" },

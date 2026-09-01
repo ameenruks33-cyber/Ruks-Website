@@ -1,26 +1,40 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Package, ShoppingCart, Users, TrendingUp } from "lucide-react";
 import { useCatalogStore } from "@/store/catalog-store";
 import { Price } from "@/components/ui/Price";
+import type { StoredOrder } from "@/lib/order-types";
 
 const STATS = [
   { label: "Total Products", key: "products" as const, icon: Package, change: "Editable in admin" },
   { label: "Active Categories", key: "categories" as const, icon: TrendingUp, change: "Editable in admin" },
-  { label: "Orders Today", key: "orders" as const, icon: ShoppingCart, change: "Awaiting first order" },
-  { label: "Customers", key: "customers" as const, icon: Users, change: "Register to track" },
+  { label: "Orders", key: "orders" as const, icon: ShoppingCart, change: "From checkout" },
+  { label: "Customers", key: "customers" as const, icon: Users, change: "From orders" },
 ];
 
 export default function AdminDashboard() {
   const products = useCatalogStore((s) => s.products);
   const categories = useCatalogStore((s) => s.categories);
   const totalValue = products.reduce((sum, p) => sum + (p.salePrice ?? p.price), 0);
+  const [orders, setOrders] = useState<StoredOrder[]>([]);
+
+  useEffect(() => {
+    fetch("/api/orders")
+      .then((res) => (res.ok ? res.json() : { orders: [] }))
+      .then((data) => setOrders(data.orders ?? []))
+      .catch(() => setOrders([]));
+  }, []);
+
+  const customerCount = new Set(
+    orders.map((order) => order.customer.email.toLowerCase())
+  ).size;
 
   const statValues = {
     products: products.length.toString(),
     categories: categories.length.toString(),
-    orders: "0",
-    customers: "0",
+    orders: orders.length.toString(),
+    customers: customerCount.toString(),
   };
 
   return (

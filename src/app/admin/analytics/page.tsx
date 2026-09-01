@@ -18,7 +18,7 @@ export default function AdminAnalyticsPage() {
   const products = useCatalogStore((s) => s.products);
   const customers = useCustomersStore((s) => s.customers);
 
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+  const totalRevenue = orders.reduce((sum, o) => sum + o.totals.total, 0);
   const totalOrders = orders.length;
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
   const activeProducts = products.filter((p) => p.isActive).length;
@@ -187,15 +187,17 @@ export default function AdminAnalyticsPage() {
                   {orders.slice(0, 10).map((order) => (
                     <tr key={order.orderNumber} className="border-b border-cream-dark/50">
                       <td className="py-3 font-medium text-burgundy">{order.orderNumber}</td>
-                      <td className="py-3 text-charcoal/70">{order.email || "Guest"}</td>
+                      <td className="py-3 text-charcoal/70">{order.customer?.email || "Guest"}</td>
                       <td className="py-3">
                         <span className="text-xs bg-burgundy/10 text-burgundy px-2 py-1 rounded-sm capitalize">
                           {order.status.toLowerCase()}
                         </span>
                       </td>
-                      <td className="py-3 text-charcoal/60">{order.createdAt}</td>
+                      <td className="py-3 text-charcoal/60">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </td>
                       <td className="py-3 text-right font-medium">
-                        <Price amount={order.total} />
+                        <Price amount={order.totals.total} />
                       </td>
                     </tr>
                   ))}

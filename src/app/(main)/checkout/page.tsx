@@ -10,7 +10,6 @@ import { useOrdersStore } from "@/store/orders-store";
 import { useCustomersStore } from "@/store/customers-store";
 import { useSettingsStore } from "@/store/settings-store";
 import { useFormatPrice } from "@/components/ui/Price";
-import { generateOrderNumber } from "@/lib/utils";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -41,6 +40,7 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [orderError, setOrderError] = useState("");
 
   const [form, setForm] = useState({
     email: "",
@@ -82,28 +82,87 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     setLoading(true);
-    // Simulate payment processing
-    await new Promise((r) => setTimeout(r, 1500));
-    const num = generateOrderNumber();
-    addOrder({
-      orderNumber: num,
-      status: "CONFIRMED",
-      total,
-      items: items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
-      email: form.email,
-      createdAt: new Date().toLocaleDateString(),
-    });
-    upsertFromOrder({
-      email: form.email,
-      name: form.fullName,
-      phone: form.phone,
-      orderTotal: total,
-      orderDate: new Date().toLocaleDateString(),
-    });
-    setOrderNumber(num);
-    clearCart();
-    setStep("success");
-    setLoading(false);
+    setOrderError("");
+
+    const shipping = shippingMethods.find((m) => m.id === shippingMethod);
+    const payment = PAYMENT_METHODS.find((m) => m.id === paymentMethod);
+
+    const payload = {
+      items: items.map((item) => ({
+        productId: item.productId,
+        variantId: item.variantId,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        size: item.size,
+        color: item.color,
+        image: item.image,
+      })),
+      customer: {
+        email: form.email,
+        fullName: form.fullName,
+        phone: form.phone,
+      },
+      address: {
+        line1: form.line1,
+        line2: form.line2 || undefined,
+        city: form.city,
+        postalCode: form.postalCode || undefined,
+        country: form.country,
+      },
+      shipping: {
+        method: shippingMethod,
+        methodName: shipping?.name ?? "Standard Delivery",
+        cost: shippingCost,
+      },
+      payment: {
+        method: paymentMethod,
+        methodName: payment?.name ?? paymentMethod,
+      },
+      totals: {
+        subtotal,
+        discount: couponDiscount,
+        shipping: shippingCost,
+        total,
+        currency,
+        couponCode: couponCode || undefined,
+      },
+    };
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Could not place order");
+      }
+
+      const data = await res.json();
+      const order = data.order;
+
+      addOrder(order);
+      upsertFromOrder({
+        email: form.email,
+        name: form.fullName,
+        phone: form.phone,
+        orderTotal: total,
+        orderDate: new Date(order.createdAt).toLocaleDateString(),
+      });
+
+      setOrderNumber(order.orderNumber);
+      clearCart();
+      setStep("success");
+    } catch (error) {
+      setOrderError(
+        error instanceof Error ? error.message : "Something went wrong. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (step === "success") {
@@ -114,7 +173,7 @@ export default function CheckoutPage() {
         <p className="text-charcoal/60 mb-2">Thank you for your purchase.</p>
         <p className="text-lg font-semibold text-burgundy mb-8">Order #{orderNumber}</p>
         <p className="text-sm text-charcoal/50 mb-8">
-          A confirmation email has been sent to {form.email || "your email"}.
+          We&apos;ll contact you at {form.email || "your email"} with delivery updates.
         </p>
         <div className="flex gap-4 justify-center">
           <Link href="/shop"><Button variant="outline">Continue Shopping</Button></Link>
@@ -306,6 +365,9 @@ export default function CheckoutPage() {
                   {loading ? "Processing..." : `Pay ${formatPrice(total)}`}
                 </Button>
               </div>
+              {orderError && (
+                <p className="text-sm text-red-500">{orderError}</p>
+              )}
             </>
           )}
         </div>

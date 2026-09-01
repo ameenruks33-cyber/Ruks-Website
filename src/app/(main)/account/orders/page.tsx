@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Package, Search } from "lucide-react";
+import type { StoredOrder } from "@/lib/order-types";
 import { useOrdersStore } from "@/store/orders-store";
 import { useFormatPrice } from "@/components/ui/Price";
 import { Button } from "@/components/ui/Button";
@@ -19,15 +20,38 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState("");
+  const [order, setOrder] = useState<StoredOrder | null>(null);
   const [searched, setSearched] = useState(false);
-  const getOrder = useOrdersStore((s) => s.getOrder);
+  const [loading, setLoading] = useState(false);
+  const getLocalOrder = useOrdersStore((s) => s.getOrder);
+  const addOrder = useOrdersStore((s) => s.addOrder);
   const formatPrice = useFormatPrice();
 
-  const order = searched ? getOrder(orderNumber) : null;
-
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setSearched(true);
+    setOrder(null);
+
+    const local = getLocalOrder(orderNumber);
+    if (local) {
+      setOrder(local);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/orders?orderNumber=${encodeURIComponent(orderNumber)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setOrder(data.order);
+        addOrder(data.order);
+      }
+    } catch {
+      // handled by empty order state
+    } finally {
+      setLoading(false);
+    }
   };
 
   const currentStep = order ? STATUS_STEPS.indexOf(order.status) : -1;
@@ -44,18 +68,23 @@ export default function TrackOrderPage() {
         <Input
           placeholder="e.g. RZ260812345"
           value={orderNumber}
-          onChange={(e) => { setOrderNumber(e.target.value); setSearched(false); }}
+          onChange={(e) => {
+            setOrderNumber(e.target.value);
+            setSearched(false);
+          }}
           className="flex-1"
         />
-        <Button type="submit">
+        <Button type="submit" disabled={loading}>
           <Search size={16} />
-          Track
+          {loading ? "..." : "Track"}
         </Button>
       </form>
 
-      {searched && !order && (
+      {searched && !loading && !order && (
         <div className="bg-white border border-cream-dark rounded-sm p-8 text-center">
-          <p className="text-charcoal/60">Order not found. Check your order number or email confirmation.</p>
+          <p className="text-charcoal/60">
+            Order not found. Check your order number or email confirmation.
+          </p>
         </div>
       )}
 
@@ -68,11 +97,10 @@ export default function TrackOrderPage() {
             </div>
             <div className="text-right">
               <p className="text-sm text-charcoal/50">Total</p>
-              <p className="font-bold">{formatPrice(order.total)}</p>
+              <p className="font-bold">{formatPrice(order.totals.total)}</p>
             </div>
           </div>
 
-          {/* Progress tracker */}
           <div className="py-4">
             <div className="flex justify-between relative">
               <div className="absolute top-4 left-0 right-0 h-0.5 bg-cream-dark" />
@@ -89,9 +117,11 @@ export default function TrackOrderPage() {
                   >
                     {i + 1}
                   </div>
-                  <p className={`text-[10px] mt-2 text-center max-w-[60px] ${
-                    i <= currentStep ? "text-burgundy font-medium" : "text-charcoal/40"
-                  }`}>
+                  <p
+                    className={`text-[10px] mt-2 text-center max-w-[60px] ${
+                      i <= currentStep ? "text-burgundy font-medium" : "text-charcoal/40"
+                    }`}
+                  >
                     {STATUS_LABELS[step]}
                   </p>
                 </div>
@@ -102,14 +132,21 @@ export default function TrackOrderPage() {
           <div>
             <p className="font-medium text-charcoal mb-3">Items</p>
             {order.items.map((item, i) => (
-              <div key={i} className="flex justify-between text-sm py-2 border-b border-cream-dark/50 last:border-0">
-                <span>{item.name} × {item.quantity}</span>
+              <div
+                key={i}
+                className="flex justify-between text-sm py-2 border-b border-cream-dark/50 last:border-0"
+              >
+                <span>
+                  {item.name} × {item.quantity}
+                </span>
                 <span>{formatPrice(item.price * item.quantity)}</span>
               </div>
             ))}
           </div>
 
-          <p className="text-xs text-charcoal/40">Ordered on {order.createdAt}</p>
+          <p className="text-xs text-charcoal/40">
+            Ordered on {new Date(order.createdAt).toLocaleString()}
+          </p>
         </div>
       )}
     </div>

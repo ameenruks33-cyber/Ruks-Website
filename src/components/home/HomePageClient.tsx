@@ -6,10 +6,10 @@ import { ProductGrid } from "@/components/shop/ProductCard";
 import { DealsBar } from "@/components/home/DealsBar";
 import { TrustBadges } from "@/components/home/TrustBadges";
 import { NewsletterSignup } from "@/components/home/NewsletterSignup";
-import { Reviews } from "@/components/home/Reviews";
+import { AbayaSection } from "@/components/home/AbayaSection";
+import { CustomerReviewsSection } from "@/components/home/CustomerReviewsSection";
 import { InstagramSection } from "@/components/home/InstagramSection";
 import { useCatalogStore } from "@/store/catalog-store";
-import { reviews } from "@/data/store";
 
 export function HomePageClient() {
   const banners = useCatalogStore((s) => s.banners);
@@ -28,6 +28,7 @@ export function HomePageClient() {
       <HeroBanner banners={banners} />
       <TrustBadges />
       <CategoryGrid categories={categories} />
+      <AbayaSection />
       <ProductGrid
         products={featured}
         title="Trending Now"
@@ -67,7 +68,7 @@ export function HomePageClient() {
         subtitle="Great deals on premium fashion"
         viewAllHref="/shop?filter=offers"
       />
-      <Reviews reviews={reviews} />
+      <CustomerReviewsSection />
       <NewsletterSignup />
       <InstagramSection />
     </>

@@ -2,19 +2,12 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-export interface StoredOrder {
-  orderNumber: string;
-  status: "PENDING" | "CONFIRMED" | "PROCESSING" | "SHIPPED" | "DELIVERED";
-  total: number;
-  items: { name: string; quantity: number; price: number }[];
-  email: string;
-  createdAt: string;
-}
+import type { StoredOrder } from "@/lib/order-types";
 
 interface OrdersState {
   orders: StoredOrder[];
   addOrder: (order: StoredOrder) => void;
+  setOrders: (orders: StoredOrder[]) => void;
   getOrder: (orderNumber: string) => StoredOrder | undefined;
 }
 
@@ -24,7 +17,14 @@ export const useOrdersStore = create<OrdersState>()(
       orders: [],
 
       addOrder: (order) =>
-        set((state) => ({ orders: [order, ...state.orders] })),
+        set((state) => ({
+          orders: [
+            order,
+            ...state.orders.filter((o) => o.orderNumber !== order.orderNumber),
+          ],
+        })),
+
+      setOrders: (orders) => set({ orders }),
 
       getOrder: (orderNumber) =>
         get().orders.find(
@@ -34,3 +34,5 @@ export const useOrdersStore = create<OrdersState>()(
     { name: "rukza-orders" }
   )
 );
+
+export type { StoredOrder };

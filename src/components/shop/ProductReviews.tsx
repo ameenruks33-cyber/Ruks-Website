@@ -33,7 +33,7 @@ export function ProductReviews({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!author.trim() || !comment.trim()) return;
-    addReview({ productId, author: author.trim(), rating, comment: comment.trim() });
+    addReview({ productId, productName, author: author.trim(), rating, comment: comment.trim() });
     setSubmitted(true);
     setShowForm(false);
     setAuthor("");

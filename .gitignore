@@ -43,6 +43,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# order data (server-side, not in git)
+/data/orders.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

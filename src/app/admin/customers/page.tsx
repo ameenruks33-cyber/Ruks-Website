@@ -29,21 +29,25 @@ export default function AdminCustomersPage() {
     });
 
     orders.forEach((order) => {
-      if (!order.email) return;
-      const key = order.email.toLowerCase();
+      const email = order.customer?.email;
+      if (!email) return;
+      const key = email.toLowerCase();
       const existing = map.get(key);
       if (existing) {
         existing.orderCount += 1;
-        existing.totalSpent += order.total;
-        existing.lastOrderAt = order.createdAt;
+        existing.totalSpent += order.totals.total;
+        existing.lastOrderAt = new Date(order.createdAt).toLocaleDateString();
+        if (order.customer.phone) existing.phone = order.customer.phone;
+        if (order.customer.fullName) existing.name = order.customer.fullName;
       } else {
         map.set(key, {
           id: `cust-${key}`,
-          name: order.email.split("@")[0],
-          email: order.email,
+          name: order.customer.fullName || email.split("@")[0],
+          email,
+          phone: order.customer.phone,
           orderCount: 1,
-          totalSpent: order.total,
-          lastOrderAt: order.createdAt,
+          totalSpent: order.totals.total,
+          lastOrderAt: new Date(order.createdAt).toLocaleDateString(),
         });
       }
     });

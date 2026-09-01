@@ -1,9 +1,14 @@
+import bcrypt from "bcryptjs";
+
 export const ADMIN_COOKIE = "rukza_admin_session";
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 function getAdminPassword(): string {
-  // Password only from environment — never hardcoded in source code
   return process.env.ADMIN_PASSWORD?.trim() ?? "";
+}
+
+function getAdminPasswordHash(): string {
+  return process.env.ADMIN_PASSWORD_HASH?.trim() ?? "";
 }
 
 function getAdminSecret(): string {
@@ -38,22 +43,66 @@ async function hmacSha256(secret: string, message: string): Promise<string> {
     .join("");
 }
 
+export function isAdminConfigured(): boolean {
+  return Boolean(getAdminSecret() && (getAdminPasswordHash() || getAdminPassword()));
+}
+
 export async function createSessionToken(): Promise<string> {
-  return hmacSha256(getAdminSecret(), getAdminPassword());
+  const secret = getAdminSecret();
+  if (!secret) throw new Error("ADMIN_SECRET is not configured");
+
+  const expiresAt = Date.now() + SESSION_MAX_AGE * 1000;
+  const payload = String(expiresAt);
+  const signature = await hmacSha256(secret, payload);
+  return `${payload}.${signature}`;
 }
 
 export async function verifySessionToken(token: string | undefined): Promise<boolean> {
-  if (!token || !getAdminPassword() || !getAdminSecret()) return false;
+  if (!token || !getAdminSecret()) return false;
+
+  const [expiresAtStr, signature] = token.split(".");
+  if (!expiresAtStr || !signature) return false;
+
+  const expiresAt = Number(expiresAtStr);
+  if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return false;
+
   try {
-    const expected = await createSessionToken();
-    return timingSafeEqual(token, expected);
+    const expected = await hmacSha256(getAdminSecret(), expiresAtStr);
+    return timingSafeEqual(signature, expected);
   } catch {
     return false;
   }
 }
 
-export function verifyAdminPassword(password: string): boolean {
-  const expected = getAdminPassword();
-  if (!expected || !getAdminSecret()) return false;
-  return timingSafeEqual(password, expected);
+export async function verifyAdminPassword(password: string): Promise<boolean> {
+  const hash = getAdminPasswordHash();
+  const plain = getAdminPassword();
+  const secret = getAdminSecret();
+
+  if (!secret) return false;
+
+  if (hash) {
+    try {
+      return await bcrypt.compare(password, hash);
+    } catch {
+      return false;
+    }
+  }
+
+  if (plain) {
+    return timingSafeEqual(password, plain);
+  }
+
+  return false;
+}
+
+export function getAdminCookieOptions(maxAge: number) {
+  const isProd = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: "strict" as const,
+    maxAge,
+    path: "/",
+  };
 }

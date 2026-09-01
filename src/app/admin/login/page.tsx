@@ -26,7 +26,8 @@ function LoginForm() {
       });
 
       if (!res.ok) {
-        setError("Wrong password. Only the store owner can access this area.");
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Wrong password. Only the store owner can access this area.");
         setLoading(false);
         return;
       }

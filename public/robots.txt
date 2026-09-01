@@ -4,3 +4,4 @@ Allow: /
 # Hide admin panel from search engines
 Disallow: /admin
 Disallow: /api/admin
+Disallow: /api/catalog

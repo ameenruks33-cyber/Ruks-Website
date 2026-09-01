@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -24,6 +27,20 @@ const NAV = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Login page — no sidebar, no admin chrome
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  const handleLogout = async () => {
+    await fetch("/api/admin/logout", { method: "POST" });
+    router.push("/admin/login");
+    router.refresh();
+  };
+
   return (
     <div className="min-h-screen flex bg-cream-dark/30">
       <aside className="w-64 bg-charcoal text-cream flex-shrink-0 hidden lg:flex flex-col">
@@ -31,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin" className="font-display text-xl font-bold text-cream">
             RukZa Admin
           </Link>
-          <p className="text-xs text-cream/40 mt-1">Management Dashboard</p>
+          <p className="text-xs text-cream/40 mt-1">Private — Owner Only</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -47,22 +64,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
 
-        <div className="p-4 border-t border-cream/10">
+        <div className="p-4 border-t border-cream/10 space-y-1">
           <Link
             href="/"
+            target="_blank"
             className="flex items-center gap-3 px-3 py-2.5 text-sm text-cream/50 hover:text-cream transition-colors"
           >
-            <LogOut size={18} />
-            Back to Store
+            View Store
           </Link>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3 py-2.5 text-sm text-cream/50 hover:text-red-300 transition-colors w-full"
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white border-b border-cream-dark px-6 py-4 flex items-center justify-between lg:hidden">
-          <Link href="/admin" className="font-display text-lg font-bold text-burgundy">
+        <header className="bg-white border-b border-cream-dark px-6 py-4 flex items-center justify-between">
+          <Link href="/admin" className="font-display text-lg font-bold text-burgundy lg:hidden">
             RukZa Admin
           </Link>
+          <p className="hidden lg:block text-xs text-charcoal/40">
+            Confidential admin area — not visible to customers
+          </p>
+          <button
+            onClick={handleLogout}
+            className="text-sm text-charcoal/60 hover:text-burgundy flex items-center gap-1.5"
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
         </header>
         <main className="flex-1 p-6 lg:p-8 overflow-auto">{children}</main>
       </div>

@@ -147,7 +147,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => {
+            onClick={async () => {
               const post = createMarketingDraftFromProduct(
                 {
                   ...product,
@@ -162,7 +162,10 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                 },
                 { force: true }
               );
-              if (post) router.push(`/admin/marketing/${post.id}`);
+              if (post) {
+                await syncCatalogNow();
+                router.push(`/admin/marketing/${post.id}`);
+              }
             }}
           >
             <Megaphone size={16} />

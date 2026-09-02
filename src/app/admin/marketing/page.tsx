@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Megaphone,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { useMarketingStore } from "@/store/marketing-store";
 import { useCatalogStore } from "@/store/catalog-store";
+import { syncCatalogNow } from "@/lib/catalog-sync";
 import { createMarketingDraftFromProduct } from "@/lib/marketing-triggers";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -47,10 +49,12 @@ function statusClass(status: MarketingStatus) {
 }
 
 export default function AdminMarketingPage() {
+  const router = useRouter();
   const { marketingPosts, socialConnections } = useMarketingStore();
   const products = useCatalogStore((s) => s.products);
   const [tab, setTab] = useState<MarketingStatus | "all">("all");
   const [showProductPicker, setShowProductPicker] = useState(false);
+  const [creatingPostId, setCreatingPostId] = useState<string | null>(null);
 
   const today = new Date().toDateString();
 
@@ -75,13 +79,20 @@ export default function AdminMarketingPage() {
     return marketingPosts.filter((p) => p.status === tab);
   }, [marketingPosts, tab]);
 
-  const handleCreateForProduct = (productId: string) => {
+  const handleCreateForProduct = async (productId: string) => {
     const product = products.find((p) => p.id === productId);
-    if (!product) return;
+    if (!product || creatingPostId) return;
+
     const post = createMarketingDraftFromProduct(product, { force: true });
+    if (!post) return;
+
+    setCreatingPostId(post.id);
     setShowProductPicker(false);
-    if (post) {
-      window.location.href = `/admin/marketing/${post.id}`;
+    try {
+      await syncCatalogNow();
+      router.push(`/admin/marketing/${post.id}`);
+    } finally {
+      setCreatingPostId(null);
     }
   };
 
@@ -205,6 +216,15 @@ export default function AdminMarketingPage() {
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {creatingPostId && (
+        <div className="fixed inset-0 bg-charcoal/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-sm p-6 w-full max-w-sm text-center">
+            <p className="font-medium text-charcoal">Creating AI post...</p>
+            <p className="text-sm text-charcoal/50 mt-2">Saving and opening the editor</p>
+          </div>
         </div>
       )}
 

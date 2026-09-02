@@ -39,7 +39,9 @@ export default function MarketingEditPage({ params }: MarketingEditPageProps) {
   const deletePost = useMarketingStore((s) => s.deletePost);
   const getProductById = useCatalogStore((s) => s.getProductById);
   const hydrated = useCatalogStore((s) => s.hydrated);
-  const [form, setForm] = useState<MarketingPost | null>(null);
+  const [form, setForm] = useState<MarketingPost | null>(
+    () => getPostById(postId) ?? null
+  );
   const [saved, setSaved] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishResults, setPublishResults] = useState<
@@ -66,7 +68,12 @@ export default function MarketingEditPage({ params }: MarketingEditPageProps) {
       );
     }
 
-    return <div className="p-8">Loading...</div>;
+    return (
+      <div className="p-8">
+        <p className="text-charcoal/70">Generating your AI marketing post...</p>
+        <p className="text-sm text-charcoal/40 mt-2">This usually takes a few seconds.</p>
+      </div>
+    );
   }
 
   const update = <K extends keyof MarketingPost>(key: K, value: MarketingPost[K]) => {

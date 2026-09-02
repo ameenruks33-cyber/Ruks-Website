@@ -97,8 +97,16 @@ export function hydrateStoresFromCatalog(data: StoreCatalogData) {
   useHomePanelsStore.getState().setHomePanels(
     normalizeHomePanels(data.homePanels)
   );
+
+  const localPosts = useMarketingStore.getState().marketingPosts;
+  const serverPosts = data.marketingPosts ?? [];
+  const serverIds = new Set(serverPosts.map((post) => post.id));
+  const unsyncedLocalPosts = localPosts.filter((post) => !serverIds.has(post.id));
+  const mergedPosts =
+    unsyncedLocalPosts.length > 0 ? [...serverPosts, ...unsyncedLocalPosts] : serverPosts;
+
   useMarketingStore.getState().setMarketingData(
-    data.marketingPosts ?? [],
+    mergedPosts,
     data.socialConnections ?? DEFAULT_SOCIAL_CONNECTIONS
   );
   lastServerUpdatedAt = data.updatedAt;

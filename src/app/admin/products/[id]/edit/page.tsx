@@ -164,8 +164,13 @@ export default function EditProductPage(_props: EditProductPageProps) {
                 { force: true }
               );
               if (post) {
+                try {
+                  sessionStorage.setItem("rukza-marketing-open-id", post.id);
+                } catch {
+                  // ignore
+                }
                 void syncCatalogNow();
-                router.push(`/admin/marketing?edit=${post.id}`);
+                router.push("/admin/marketing");
               }
             }}
           >

@@ -65,10 +65,10 @@ function buildHashtags(product: Product, trigger: MarketingTrigger): string[] {
     "FashionHub",
   ];
 
-  const categoryTag = product.categoryName.replace(/\s+/g, "");
+  const categoryTag = (product.categoryName ?? "").replace(/\s+/g, "");
   if (categoryTag) base.unshift(categoryTag);
 
-  product.tags.slice(0, 4).forEach((tag) => {
+  product.tags?.slice(0, 4).forEach((tag) => {
     base.push(tag.replace(/\s+/g, ""));
   });
 
@@ -119,6 +119,7 @@ export function generateMarketingContent(
   const priceText = formatMoney(displayPrice, currency);
   const productUrl = `${shopUrl.replace(/\/$/, "")}/shop/${product.slug}`;
   const hook = stockHook(stock, trigger);
+  const description = product.description?.trim() || product.name;
 
   const sizeLine = sizes.length ? `Sizes: ${sizes.join(", ")}` : "";
   const colorLine = colors.length ? `Colors: ${colors.join(", ")}` : "";
@@ -128,7 +129,7 @@ export function generateMarketingContent(
     hook,
     "",
     `👗 ${product.name}`,
-    product.description.split(".").at(0)?.trim() || product.description.slice(0, 120),
+    description.split(".").at(0)?.trim() || description.slice(0, 120),
     "",
     detailLines,
     `💰 ${priceText}`,
@@ -161,7 +162,7 @@ export function generateMarketingContent(
     hook,
     "",
     `${product.name} — ${priceText}`,
-    product.description.slice(0, 160),
+    description.slice(0, 160),
     "",
     `Shop now: ${productUrl}`,
   ].join("\n");

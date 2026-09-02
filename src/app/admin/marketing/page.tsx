@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   Megaphone,
@@ -23,6 +22,8 @@ import { MarketingPostEditor } from "@/components/admin/MarketingPostEditor";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import type { MarketingPost, MarketingStatus } from "@/types/marketing";
+
+const OPEN_EDIT_KEY = "rukza-marketing-open-id";
 
 const STATUS_TABS: { label: string; value: MarketingStatus | "all" }[] = [
   { label: "All", value: "all" },
@@ -50,27 +51,31 @@ function statusClass(status: MarketingStatus) {
 }
 
 export default function AdminMarketingPage() {
-  return (
-    <Suspense fallback={<div className="p-8 text-charcoal/70">Loading AI Marketing...</div>}>
-      <AdminMarketingContent />
-    </Suspense>
-  );
-}
-
-function AdminMarketingContent() {
-  const searchParams = useSearchParams();
   const { marketingPosts, socialConnections } = useMarketingStore();
   const products = useCatalogStore((s) => s.products);
   const [tab, setTab] = useState<MarketingStatus | "all">("all");
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [editingPost, setEditingPost] = useState<MarketingPost | null>(null);
+  const [createError, setCreateError] = useState("");
 
   useEffect(() => {
-    const editId = searchParams.get("edit");
-    if (!editId) return;
-    const post = marketingPosts.find((p) => p.id === editId);
-    if (post) setEditingPost(post);
-  }, [searchParams, marketingPosts]);
+    try {
+      const editId = sessionStorage.getItem(OPEN_EDIT_KEY);
+      if (!editId) return;
+
+      const post =
+        marketingPosts.find((p) => p.id === editId) ??
+        useMarketingStore.getState().getPostById(editId);
+
+      if (post) {
+        sessionStorage.removeItem(OPEN_EDIT_KEY);
+        setEditingPost(post);
+        setTab("draft");
+      }
+    } catch {
+      // ignore
+    }
+  }, [marketingPosts]);
 
   const today = new Date().toDateString();
 
@@ -96,16 +101,29 @@ function AdminMarketingContent() {
   }, [marketingPosts, tab]);
 
   const handleCreateForProduct = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (!product) return;
+    setCreateError("");
+    try {
+      const product = products.find((p) => p.id === productId);
+      if (!product) {
+        setCreateError("Product not found. Refresh the page and try again.");
+        return;
+      }
 
-    const post = createMarketingDraftFromProduct(product, { force: true });
-    if (!post) return;
+      const post = createMarketingDraftFromProduct(product, { force: true });
+      if (!post) {
+        setCreateError("Could not create post. Try again.");
+        return;
+      }
 
-    setShowProductPicker(false);
-    setTab("draft");
-    setEditingPost(post);
-    void syncCatalogNow();
+      setShowProductPicker(false);
+      setTab("draft");
+      setEditingPost(post);
+      void syncCatalogNow();
+    } catch (error) {
+      setCreateError(
+        error instanceof Error ? error.message : "Something went wrong creating the post."
+      );
+    }
   };
 
   return (
@@ -116,6 +134,7 @@ function AdminMarketingContent() {
           <p className="text-charcoal/60">
             Product → AI content → Your approval → Publish to Instagram &amp; WhatsApp
           </p>
+          <p className="text-xs text-charcoal/40 mt-1">Panel version: 2026-09-02-b</p>
         </div>
         <div className="flex gap-3">
           <Link href="/admin/marketing/connections">
@@ -127,6 +146,12 @@ function AdminMarketingContent() {
           </Button>
         </div>
       </div>
+
+      {createError && (
+        <div className="mb-6 rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {createError}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[

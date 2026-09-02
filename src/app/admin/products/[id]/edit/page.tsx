@@ -7,7 +7,6 @@ import Link from "next/link";
 import { ArrowLeft, Save, Plus, Trash2, Megaphone } from "lucide-react";
 import { useCatalogStore } from "@/store/catalog-store";
 import { syncCatalogNow } from "@/lib/catalog-sync";
-import { cacheMarketingDraft } from "@/lib/marketing-draft-cache";
 import {
   createMarketingDraftFromProduct,
   maybeCreateNewArrivalDraft,
@@ -165,9 +164,8 @@ export default function EditProductPage(_props: EditProductPageProps) {
                 { force: true }
               );
               if (post) {
-                cacheMarketingDraft(post);
-                await syncCatalogNow();
-                router.push(`/admin/marketing/${post.id}`);
+                void syncCatalogNow();
+                router.push(`/admin/marketing?edit=${post.id}`);
               }
             }}
           >

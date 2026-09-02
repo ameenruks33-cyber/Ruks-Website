@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   Megaphone,
@@ -17,11 +18,11 @@ import {
 import { useMarketingStore } from "@/store/marketing-store";
 import { useCatalogStore } from "@/store/catalog-store";
 import { syncCatalogNow } from "@/lib/catalog-sync";
-import { cacheMarketingDraft } from "@/lib/marketing-draft-cache";
 import { createMarketingDraftFromProduct } from "@/lib/marketing-triggers";
+import { MarketingPostEditor } from "@/components/admin/MarketingPostEditor";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import type { MarketingStatus } from "@/types/marketing";
+import type { MarketingPost, MarketingStatus } from "@/types/marketing";
 
 const STATUS_TABS: { label: string; value: MarketingStatus | "all" }[] = [
   { label: "All", value: "all" },
@@ -49,11 +50,27 @@ function statusClass(status: MarketingStatus) {
 }
 
 export default function AdminMarketingPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-charcoal/70">Loading AI Marketing...</div>}>
+      <AdminMarketingContent />
+    </Suspense>
+  );
+}
+
+function AdminMarketingContent() {
+  const searchParams = useSearchParams();
   const { marketingPosts, socialConnections } = useMarketingStore();
   const products = useCatalogStore((s) => s.products);
   const [tab, setTab] = useState<MarketingStatus | "all">("all");
   const [showProductPicker, setShowProductPicker] = useState(false);
-  const [creatingPostId, setCreatingPostId] = useState<string | null>(null);
+  const [editingPost, setEditingPost] = useState<MarketingPost | null>(null);
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId) return;
+    const post = marketingPosts.find((p) => p.id === editId);
+    if (post) setEditingPost(post);
+  }, [searchParams, marketingPosts]);
 
   const today = new Date().toDateString();
 
@@ -78,23 +95,17 @@ export default function AdminMarketingPage() {
     return marketingPosts.filter((p) => p.status === tab);
   }, [marketingPosts, tab]);
 
-  const handleCreateForProduct = async (productId: string) => {
+  const handleCreateForProduct = (productId: string) => {
     const product = products.find((p) => p.id === productId);
-    if (!product || creatingPostId) return;
+    if (!product) return;
 
     const post = createMarketingDraftFromProduct(product, { force: true });
     if (!post) return;
 
-    setCreatingPostId(post.id);
     setShowProductPicker(false);
-    cacheMarketingDraft(post);
     setTab("draft");
-
-    try {
-      await syncCatalogNow();
-    } finally {
-      setCreatingPostId(null);
-    }
+    setEditingPost(post);
+    void syncCatalogNow();
   };
 
   return (
@@ -182,11 +193,11 @@ export default function AdminMarketingPage() {
       ) : (
         <div className="space-y-4">
           {filtered.map((post) => (
-            <Link
+            <button
               key={post.id}
-              href={`/admin/marketing/${post.id}`}
-              onClick={() => cacheMarketingDraft(post)}
-              className="flex gap-4 bg-white p-4 rounded-sm border border-cream-dark hover:border-burgundy transition-colors"
+              type="button"
+              onClick={() => setEditingPost(post)}
+              className="flex w-full gap-4 bg-white p-4 rounded-sm border border-cream-dark hover:border-burgundy transition-colors text-left"
             >
               {post.productImage && (
                 <div className="relative w-16 h-20 flex-shrink-0 rounded-sm overflow-hidden bg-cream-dark">
@@ -216,22 +227,13 @@ export default function AdminMarketingPage() {
                   {post.channels.website && <span>Website</span>}
                 </div>
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       )}
 
-      {creatingPostId && (
-        <div className="fixed inset-0 bg-charcoal/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm p-6 w-full max-w-sm text-center">
-            <p className="font-medium text-charcoal">Creating AI post...</p>
-            <p className="text-sm text-charcoal/50 mt-2">Generating captions and saving your draft</p>
-          </div>
-        </div>
-      )}
-
       {showProductPicker && (
-        <div className="fixed inset-0 bg-charcoal/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-charcoal/50 z-40 flex items-center justify-center p-4">
           <div className="bg-white rounded-sm p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
             <h2 className="font-semibold text-lg mb-4">Select a product to market</h2>
             <div className="space-y-2">
@@ -255,6 +257,10 @@ export default function AdminMarketingPage() {
             </Button>
           </div>
         </div>
+      )}
+
+      {editingPost && (
+        <MarketingPostEditor post={editingPost} onClose={() => setEditingPost(null)} />
       )}
     </div>
   );

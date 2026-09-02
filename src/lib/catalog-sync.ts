@@ -150,12 +150,18 @@ export async function loadCatalogFromServer(force = false): Promise<boolean> {
 export async function pushCatalogToServer(): Promise<boolean> {
   notifySyncStatus("syncing");
   try {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15000);
+
     const res = await fetch("/api/catalog", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(getLocalCatalogPayload()),
+      signal: controller.signal,
     });
+    window.clearTimeout(timeout);
+
     if (!res.ok) {
       notifySyncStatus("error");
       return false;

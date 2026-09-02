@@ -99,6 +99,7 @@ export default function AdminCustomersPage() {
           <p className="text-charcoal/60">
             {customers.length} customer{customers.length !== 1 ? "s" : ""}
           </p>
+          <p className="text-xs text-charcoal/40 mt-1">Customers panel v2026-09-02</p>
         </div>
         <Button onClick={() => setShowAddForm(true)}>
           <Plus size={16} />

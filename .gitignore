@@ -41,8 +41,9 @@ yarn-error.log*
 .env.vercel
 !.env.example
 
-# vercel
-.vercel
+# vercel — keep project link in git for deploys
+.vercel/*
+!.vercel/project.json
 
 # order data (server-side, not in git)
 /data/orders.json
@@ -52,7 +53,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
 .env*
 
 # firebase

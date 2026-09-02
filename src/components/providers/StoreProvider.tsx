@@ -5,11 +5,19 @@ import {
   clearLegacyBrowserCatalogCache,
   loadCatalogFromServer,
 } from "@/lib/catalog-sync";
+import { useCatalogStore } from "@/store/catalog-store";
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     clearLegacyBrowserCatalogCache();
-    loadCatalogFromServer(true);
+
+    const hydrateFailSafe = window.setTimeout(() => {
+      useCatalogStore.setState({ hydrated: true });
+    }, 2500);
+
+    void loadCatalogFromServer(true).finally(() => {
+      window.clearTimeout(hydrateFailSafe);
+    });
 
     const refresh = () => {
       loadCatalogFromServer();

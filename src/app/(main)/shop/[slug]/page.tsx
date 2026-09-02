@@ -1,19 +1,19 @@
 "use client";
 
-import { use } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useParams } from "next/navigation";import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useCatalogStore } from "@/store/catalog-store";
 import { ProductDetail } from "@/components/shop/ProductDetail";
 
 interface ProductPageProps {
-  params: Promise<{ slug: string }>;
+  params?: Promise<{ slug: string }>;
 }
 
-export default function ProductPage({ params }: ProductPageProps) {
-  const { slug } = use(params);
-  const hydrated = useCatalogStore((s) => s.hydrated);
+export default function ProductPage(_props: ProductPageProps) {
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug ?? "";  const hydrated = useCatalogStore((s) => s.hydrated);
   const getProductBySlug = useCatalogStore((s) => s.getProductBySlug);
 
   const product = getProductBySlug(slug);

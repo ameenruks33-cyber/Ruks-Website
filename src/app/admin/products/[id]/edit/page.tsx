@@ -1,12 +1,13 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Save, Plus, Trash2, Megaphone } from "lucide-react";
 import { useCatalogStore } from "@/store/catalog-store";
 import { syncCatalogNow } from "@/lib/catalog-sync";
+import { cacheMarketingDraft } from "@/lib/marketing-draft-cache";
 import {
   createMarketingDraftFromProduct,
   maybeCreateNewArrivalDraft,
@@ -16,11 +17,12 @@ import { Input } from "@/components/ui/Input";
 import { Price } from "@/components/ui/Price";
 
 interface EditProductPageProps {
-  params: Promise<{ id: string }>;
+  params?: Promise<{ id: string }>;
 }
 
-export default function EditProductPage({ params }: EditProductPageProps) {
-  const { id: productId } = use(params);
+export default function EditProductPage(_props: EditProductPageProps) {
+  const params = useParams<{ id: string }>();
+  const productId = params?.id ?? "";
   const router = useRouter();
   const { getProductById, updateProduct, categories, hydrated } = useCatalogStore();
   const [saved, setSaved] = useState(false);
@@ -163,6 +165,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                 { force: true }
               );
               if (post) {
+                cacheMarketingDraft(post);
                 await syncCatalogNow();
                 router.push(`/admin/marketing/${post.id}`);
               }

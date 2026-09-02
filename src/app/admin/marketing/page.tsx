@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Megaphone,
@@ -18,6 +17,7 @@ import {
 import { useMarketingStore } from "@/store/marketing-store";
 import { useCatalogStore } from "@/store/catalog-store";
 import { syncCatalogNow } from "@/lib/catalog-sync";
+import { cacheMarketingDraft } from "@/lib/marketing-draft-cache";
 import { createMarketingDraftFromProduct } from "@/lib/marketing-triggers";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -49,7 +49,6 @@ function statusClass(status: MarketingStatus) {
 }
 
 export default function AdminMarketingPage() {
-  const router = useRouter();
   const { marketingPosts, socialConnections } = useMarketingStore();
   const products = useCatalogStore((s) => s.products);
   const [tab, setTab] = useState<MarketingStatus | "all">("all");
@@ -88,9 +87,11 @@ export default function AdminMarketingPage() {
 
     setCreatingPostId(post.id);
     setShowProductPicker(false);
+    cacheMarketingDraft(post);
+    setTab("draft");
+
     try {
       await syncCatalogNow();
-      router.push(`/admin/marketing/${post.id}`);
     } finally {
       setCreatingPostId(null);
     }
@@ -184,6 +185,7 @@ export default function AdminMarketingPage() {
             <Link
               key={post.id}
               href={`/admin/marketing/${post.id}`}
+              onClick={() => cacheMarketingDraft(post)}
               className="flex gap-4 bg-white p-4 rounded-sm border border-cream-dark hover:border-burgundy transition-colors"
             >
               {post.productImage && (
@@ -223,7 +225,7 @@ export default function AdminMarketingPage() {
         <div className="fixed inset-0 bg-charcoal/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-sm p-6 w-full max-w-sm text-center">
             <p className="font-medium text-charcoal">Creating AI post...</p>
-            <p className="text-sm text-charcoal/50 mt-2">Saving and opening the editor</p>
+            <p className="text-sm text-charcoal/50 mt-2">Generating captions and saving your draft</p>
           </div>
         </div>
       )}

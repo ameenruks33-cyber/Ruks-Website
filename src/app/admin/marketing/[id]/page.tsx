@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Save,
@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { useMarketingStore } from "@/store/marketing-store";
 import { useCatalogStore } from "@/store/catalog-store";
-import { syncCatalogNow } from "@/lib/catalog-sync";
+import { syncCatalogNow, loadCatalogFromServer } from "@/lib/catalog-sync";
+import { readMarketingDraft, clearMarketingDraft } from "@/lib/marketing-draft-cache";
 import { generateMarketingContent } from "@/lib/marketing-content-generator";
 import { getInstagramCaptionForPost } from "@/lib/marketing-publish";
 import { useSettingsStore } from "@/store/settings-store";
@@ -25,11 +26,12 @@ import { Input } from "@/components/ui/Input";
 import type { MarketingPost } from "@/types/marketing";
 
 interface MarketingEditPageProps {
-  params: Promise<{ id: string }>;
+  params?: Promise<{ id: string }>;
 }
 
-export default function MarketingEditPage({ params }: MarketingEditPageProps) {
-  const { id: postId } = use(params);
+export default function MarketingEditPage(_props: MarketingEditPageProps) {
+  const params = useParams<{ id: string }>();
+  const postId = params?.id ?? "";
   const router = useRouter();
   const marketingPosts = useMarketingStore((s) => s.marketingPosts);
   const getPostById = useMarketingStore((s) => s.getPostById);
@@ -50,14 +52,45 @@ export default function MarketingEditPage({ params }: MarketingEditPageProps) {
   const settings = useSettingsStore();
 
   const [copied, setCopied] = useState<string | null>(null);
+  const [catalogChecked, setCatalogChecked] = useState(false);
+
+  useEffect(() => {
+    if (!postId) return;
+
+    const cached = readMarketingDraft(postId);
+    if (cached) {
+      const store = useMarketingStore.getState();
+      if (!store.getPostById(postId)) {
+        store.addPost(cached);
+      }
+      setForm({ ...cached });
+      clearMarketingDraft();
+    }
+  }, [postId]);
 
   useEffect(() => {
     const post = marketingPosts.find((p) => p.id === postId) ?? getPostById(postId);
     if (post) setForm({ ...post });
   }, [postId, marketingPosts, getPostById]);
 
+  useEffect(() => {
+    if (!postId || catalogChecked) return;
+
+    let cancelled = false;
+    const load = async () => {
+      await loadCatalogFromServer(true);
+      if (!cancelled) setCatalogChecked(true);
+    };
+
+    void load();
+  }, [postId, catalogChecked]);
+
+  if (!postId) {
+    return <div className="p-8 text-charcoal/70">Invalid post link.</div>;
+  }
+
   if (!form) {
-    if (hydrated && !getPostById(postId)) {
+    if (catalogChecked && hydrated && !getPostById(postId)) {
       return (
         <div className="p-8 text-center">
           <p className="text-charcoal/70 mb-4">Marketing post not found.</p>

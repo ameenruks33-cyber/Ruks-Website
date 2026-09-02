@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,9 +20,9 @@ interface EditProductPageProps {
 }
 
 export default function EditProductPage({ params }: EditProductPageProps) {
+  const { id: productId } = use(params);
   const router = useRouter();
   const { getProductById, updateProduct, categories, hydrated } = useCatalogStore();
-  const [productId, setProductId] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
 
@@ -41,11 +41,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   });
 
   useEffect(() => {
-    params.then((p) => setProductId(p.id));
-  }, [params]);
-
-  useEffect(() => {
-    if (!productId) return;
     const product = getProductById(productId);
     if (product) {
       setForm({
@@ -64,9 +59,12 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     }
   }, [productId, hydrated, getProductById]);
 
-  if (!productId) return <div className="p-8">Loading...</div>;
-
   const product = getProductById(productId);
+
+  if (!product && !hydrated) {
+    return <div className="p-8">Loading...</div>;
+  }
+
   if (!product) {
     return (
       <div className="p-8 text-center">

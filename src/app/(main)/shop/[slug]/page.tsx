@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -12,17 +12,9 @@ interface ProductPageProps {
 }
 
 export default function ProductPage({ params }: ProductPageProps) {
-  const [slug, setSlug] = useState<string | null>(null);
+  const { slug } = use(params);
   const hydrated = useCatalogStore((s) => s.hydrated);
   const getProductBySlug = useCatalogStore((s) => s.getProductBySlug);
-
-  useEffect(() => {
-    params.then((p) => setSlug(p.slug));
-  }, [params]);
-
-  if (!slug) {
-    return <div className="max-w-7xl mx-auto px-4 py-20 text-center">Loading...</div>;
-  }
 
   const product = getProductBySlug(slug);
 

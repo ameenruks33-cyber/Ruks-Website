@@ -124,9 +124,14 @@ export async function fetchCatalogFromServer(): Promise<StoreCatalogData | null>
 
 export async function loadCatalogFromServer(force = false): Promise<boolean> {
   const data = await fetchCatalogFromServer();
-  if (!data) return false;
+  if (!data) {
+    // Keep built-in seed data usable if the catalog API is slow or unavailable.
+    useCatalogStore.setState({ hydrated: true });
+    return false;
+  }
 
   if (!force && lastServerUpdatedAt && data.updatedAt === lastServerUpdatedAt) {
+    useCatalogStore.setState({ hydrated: true });
     return true;
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -29,6 +29,7 @@ interface MarketingEditPageProps {
 }
 
 export default function MarketingEditPage({ params }: MarketingEditPageProps) {
+  const { id: postId } = use(params);
   const router = useRouter();
   const marketingPosts = useMarketingStore((s) => s.marketingPosts);
   const getPostById = useMarketingStore((s) => s.getPostById);
@@ -37,7 +38,7 @@ export default function MarketingEditPage({ params }: MarketingEditPageProps) {
   const schedulePost = useMarketingStore((s) => s.schedulePost);
   const deletePost = useMarketingStore((s) => s.deletePost);
   const getProductById = useCatalogStore((s) => s.getProductById);
-  const [postId, setPostId] = useState<string | null>(null);
+  const hydrated = useCatalogStore((s) => s.hydrated);
   const [form, setForm] = useState<MarketingPost | null>(null);
   const [saved, setSaved] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -49,16 +50,22 @@ export default function MarketingEditPage({ params }: MarketingEditPageProps) {
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
-    params.then((p) => setPostId(p.id));
-  }, [params]);
-
-  useEffect(() => {
-    if (!postId) return;
     const post = marketingPosts.find((p) => p.id === postId) ?? getPostById(postId);
     if (post) setForm({ ...post });
   }, [postId, marketingPosts, getPostById]);
 
-  if (!postId || !form) {
+  if (!form) {
+    if (hydrated && !getPostById(postId)) {
+      return (
+        <div className="p-8 text-center">
+          <p className="text-charcoal/70 mb-4">Marketing post not found.</p>
+          <Link href="/admin/marketing" className="text-burgundy hover:underline">
+            Back to AI Marketing
+          </Link>
+        </div>
+      );
+    }
+
     return <div className="p-8">Loading...</div>;
   }
 

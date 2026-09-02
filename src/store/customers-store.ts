@@ -16,6 +16,7 @@ export interface Customer {
 
 interface CustomersState {
   customers: Customer[];
+  hiddenEmails: string[];
   upsertFromOrder: (data: {
     email: string;
     name?: string;
@@ -24,12 +25,15 @@ interface CustomersState {
     orderDate: string;
   }) => void;
   registerCustomer: (data: { name: string; email: string; phone?: string }) => void;
+  addCustomer: (data: { name: string; email: string; phone?: string }) => boolean;
+  removeCustomer: (email: string) => void;
 }
 
 export const useCustomersStore = create<CustomersState>()(
   persist(
     (set, get) => ({
       customers: [],
+      hiddenEmails: [],
 
       upsertFromOrder: ({ email, name, phone, orderTotal, orderDate }) => {
         const existing = get().customers.find(
@@ -70,17 +74,28 @@ export const useCustomersStore = create<CustomersState>()(
       },
 
       registerCustomer: ({ name, email, phone }) => {
+        get().addCustomer({ name, email, phone });
+      },
+
+      addCustomer: ({ name, email, phone }) => {
+        const normalizedEmail = email.trim().toLowerCase();
+        if (!name.trim() || !normalizedEmail) return false;
+
         const exists = get().customers.some(
-          (c) => c.email.toLowerCase() === email.toLowerCase()
+          (c) => c.email.toLowerCase() === normalizedEmail
         );
-        if (exists) return;
+        if (exists) return false;
+
+        const hidden = get().hiddenEmails.filter((e) => e !== normalizedEmail);
+
         set({
+          hiddenEmails: hidden,
           customers: [
             {
               id: `cust-${Date.now()}`,
-              name,
-              email,
-              phone,
+              name: name.trim(),
+              email: normalizedEmail,
+              phone: phone?.trim() || undefined,
               orderCount: 0,
               totalSpent: 0,
               lastOrderAt: "—",
@@ -88,6 +103,19 @@ export const useCustomersStore = create<CustomersState>()(
             },
             ...get().customers,
           ],
+        });
+        return true;
+      },
+
+      removeCustomer: (email) => {
+        const normalizedEmail = email.trim().toLowerCase();
+        set({
+          customers: get().customers.filter(
+            (c) => c.email.toLowerCase() !== normalizedEmail
+          ),
+          hiddenEmails: get().hiddenEmails.includes(normalizedEmail)
+            ? get().hiddenEmails
+            : [...get().hiddenEmails, normalizedEmail],
         });
       },
     }),

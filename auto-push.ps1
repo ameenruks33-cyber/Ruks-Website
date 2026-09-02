@@ -16,7 +16,7 @@ if ([string]::IsNullOrWhiteSpace($message)) {
     $message = "Update RukZa Fashion Hub"
 }
 
-git -c user.name="ameenruks33-cyber" -c user.email="ameenruks33-cyber@users.noreply.github.com" commit -m $message
+git -c user.name="ameenruks33-cyber" -c user.email="ameenzeon@gmail.com" commit -m $message
 
 Write-Host "Pushing to GitHub..." -ForegroundColor Cyan
 git push origin main

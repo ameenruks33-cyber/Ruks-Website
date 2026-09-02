@@ -4,9 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2, Megaphone } from "lucide-react";
 import { useCatalogStore } from "@/store/catalog-store";
 import { syncCatalogNow } from "@/lib/catalog-sync";
+import {
+  createMarketingDraftFromProduct,
+  maybeCreateNewArrivalDraft,
+} from "@/lib/marketing-triggers";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Price } from "@/components/ui/Price";
@@ -93,6 +97,8 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
   const handleSave = async () => {
     const images = form.images.filter((url) => url.trim());
+    const wasNew = product.isNew;
+
     updateProduct(productId, {
       name: form.name,
       description: form.description,
@@ -106,6 +112,16 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       isNew: form.isNew,
       isActive: form.isActive,
     });
+
+    const updatedProduct = {
+      ...product,
+      name: form.name,
+      description: form.description,
+      price: Number(form.price),
+      salePrice: form.salePrice ? Number(form.salePrice) : undefined,
+      isNew: form.isNew,
+    };
+    maybeCreateNewArrivalDraft(updatedProduct, wasNew);
 
     const published = await syncCatalogNow();
     if (!published) {
@@ -130,10 +146,35 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-display text-3xl font-bold text-charcoal">Edit Product</h1>
-        <Button onClick={handleSave}>
-          <Save size={16} />
-          {saved ? "Published!" : "Save & Publish"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const post = createMarketingDraftFromProduct(
+                {
+                  ...product,
+                  name: form.name,
+                  description: form.description,
+                  price: Number(form.price),
+                  salePrice: form.salePrice ? Number(form.salePrice) : undefined,
+                  images: form.images.filter(Boolean),
+                  isNew: form.isNew,
+                  isFeatured: form.isFeatured,
+                  isActive: form.isActive,
+                },
+                { force: true }
+              );
+              if (post) router.push(`/admin/marketing/${post.id}`);
+            }}
+          >
+            <Megaphone size={16} />
+            Market This Product
+          </Button>
+          <Button onClick={handleSave}>
+            <Save size={16} />
+            {saved ? "Published!" : "Save & Publish"}
+          </Button>
+        </div>
       </div>
       {saveError && (
         <p className="text-sm text-red-500 mb-4">{saveError}</p>
@@ -241,7 +282,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.isNew} onChange={(e) => update("isNew", e.target.checked)} className="accent-burgundy" />
-              New Arrival
+              New Arrival (auto-creates marketing draft)
             </label>
           </section>
 

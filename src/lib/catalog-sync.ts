@@ -2,6 +2,10 @@ import type { SiteSettings } from "@/lib/settings";
 import type { StoreCatalogData } from "@/lib/store-data-types";
 import { useCatalogStore } from "@/store/catalog-store";
 import { useSettingsStore } from "@/store/settings-store";
+import { useHomePanelsStore } from "@/store/home-panels-store";
+import { useMarketingStore } from "@/store/marketing-store";
+import { normalizeHomePanels } from "@/lib/home-panels";
+import { DEFAULT_SOCIAL_CONNECTIONS } from "@/types/marketing";
 
 type SyncListener = (status: "syncing" | "synced" | "error") => void;
 
@@ -53,9 +57,19 @@ export function pickSiteSettings(state: ReturnType<typeof useSettingsStore.getSt
   };
 }
 
+export function pickHomePanels(state: ReturnType<typeof useHomePanelsStore.getState>) {
+  return normalizeHomePanels({
+    dealsBar: state.dealsBar,
+    promoBanner: state.promoBanner,
+    newsletter: state.newsletter,
+  });
+}
+
 export function getLocalCatalogPayload(): Omit<StoreCatalogData, "updatedAt"> {
   const catalog = useCatalogStore.getState();
   const settings = useSettingsStore.getState();
+  const homePanels = useHomePanelsStore.getState();
+  const marketing = useMarketingStore.getState();
 
   return {
     products: catalog.products,
@@ -63,6 +77,9 @@ export function getLocalCatalogPayload(): Omit<StoreCatalogData, "updatedAt"> {
     banners: catalog.banners,
     coupons: catalog.coupons,
     settings: pickSiteSettings(settings),
+    homePanels: pickHomePanels(homePanels),
+    marketingPosts: marketing.marketingPosts,
+    socialConnections: marketing.socialConnections,
   };
 }
 
@@ -77,14 +94,27 @@ export function hydrateStoresFromCatalog(data: StoreCatalogData) {
   useSettingsStore.setState({
     ...data.settings,
   });
+  useHomePanelsStore.getState().setHomePanels(
+    normalizeHomePanels(data.homePanels)
+  );
+  useMarketingStore.getState().setMarketingData(
+    data.marketingPosts ?? [],
+    data.socialConnections ?? DEFAULT_SOCIAL_CONNECTIONS
+  );
   lastServerUpdatedAt = data.updatedAt;
 }
 
 export async function fetchCatalogFromServer(): Promise<StoreCatalogData | null> {
   try {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10000);
+
     const res = await fetch(`/api/catalog?t=${Date.now()}`, {
       cache: "no-store",
+      signal: controller.signal,
     });
+    window.clearTimeout(timeout);
+
     if (!res.ok) return null;
     return (await res.json()) as StoreCatalogData;
   } catch {

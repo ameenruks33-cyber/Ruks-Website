@@ -13,6 +13,8 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  LayoutTemplate,
+  Megaphone,
 } from "lucide-react";
 
 const NAV = [
@@ -23,6 +25,8 @@ const NAV = [
   { icon: Tag, label: "Categories", href: "/admin/categories" },
   { icon: Tag, label: "Coupons", href: "/admin/coupons" },
   { icon: ImageIcon, label: "Banners", href: "/admin/banners" },
+  { icon: LayoutTemplate, label: "Home Panels", href: "/admin/panels" },
+  { icon: Megaphone, label: "AI Marketing", href: "/admin/marketing" },
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
   { icon: Settings, label: "Settings", href: "/admin/settings" },
 ];

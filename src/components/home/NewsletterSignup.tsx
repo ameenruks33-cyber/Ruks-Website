@@ -4,8 +4,10 @@ import { useState } from "react";
 import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useHomePanelsStore } from "@/store/home-panels-store";
 
 export function NewsletterSignup() {
+  const newsletter = useHomePanelsStore((s) => s.newsletter);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -16,30 +18,30 @@ export function NewsletterSignup() {
     setEmail("");
   };
 
+  if (!newsletter.enabled) return null;
+
   return (
     <section className="bg-burgundy py-12">
       <div className="max-w-2xl mx-auto px-4 text-center">
         <Mail size={32} className="mx-auto text-gold mb-4" />
         <h2 className="font-display text-2xl font-bold text-cream mb-2">
-          Get Exclusive Deals
+          {newsletter.title}
         </h2>
-        <p className="text-cream/70 text-sm mb-6">
-          Subscribe for new arrivals, sales alerts &amp; fashion tips — like Flipkart &amp; Meesho deals!
-        </p>
+        <p className="text-cream/70 text-sm mb-6">{newsletter.description}</p>
         {subscribed ? (
-          <p className="text-gold font-medium">You&apos;re subscribed! Check your inbox soon.</p>
+          <p className="text-gold font-medium">{newsletter.successMessage}</p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
             <Input
               type="email"
-              placeholder="Enter your email"
+              placeholder={newsletter.emailPlaceholder}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               className="flex-1 bg-white"
             />
             <Button type="submit" variant="secondary" className="whitespace-nowrap">
-              Subscribe
+              {newsletter.buttonText}
             </Button>
           </form>
         )}

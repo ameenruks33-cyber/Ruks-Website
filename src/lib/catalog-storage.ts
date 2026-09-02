@@ -7,6 +7,8 @@ import {
   coupons as seedCoupons,
 } from "@/data/store";
 import { DEFAULT_SETTINGS } from "@/lib/settings";
+import { DEFAULT_HOME_PANELS, normalizeHomePanels } from "@/lib/home-panels";
+import { DEFAULT_SOCIAL_CONNECTIONS } from "@/types/marketing";
 import {
   isBlobStorageEnabled,
   readCatalogFromBlob,
@@ -28,6 +30,9 @@ function getSeedData(): StoreCatalogData {
     banners: seedBanners,
     coupons: seedCoupons,
     settings: DEFAULT_SETTINGS,
+    homePanels: DEFAULT_HOME_PANELS,
+    marketingPosts: [],
+    socialConnections: DEFAULT_SOCIAL_CONNECTIONS,
     updatedAt: new Date(0).toISOString(),
   };
 }
@@ -41,6 +46,12 @@ function normalizeCatalog(parsed: StoreCatalogData): StoreCatalogData {
     banners: parsed.banners ?? seedBanners,
     coupons: parsed.coupons ?? seedCoupons,
     settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
+    homePanels: normalizeHomePanels(parsed.homePanels),
+    marketingPosts: parsed.marketingPosts ?? [],
+    socialConnections: {
+      ...DEFAULT_SOCIAL_CONNECTIONS,
+      ...parsed.socialConnections,
+    },
     updatedAt: parsed.updatedAt ?? new Date().toISOString(),
   };
 }
@@ -138,6 +149,13 @@ export async function updateStoreCatalog(
     settings: patch.settings
       ? { ...current.settings, ...patch.settings }
       : current.settings,
+    homePanels: patch.homePanels
+      ? normalizeHomePanels({ ...current.homePanels, ...patch.homePanels })
+      : current.homePanels,
+    marketingPosts: patch.marketingPosts ?? current.marketingPosts,
+    socialConnections: patch.socialConnections
+      ? { ...current.socialConnections, ...patch.socialConnections }
+      : current.socialConnections,
     updatedAt: new Date().toISOString(),
   };
   await writeCatalog(next);

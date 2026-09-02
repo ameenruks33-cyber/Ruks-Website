@@ -3,19 +3,21 @@
 import { useState, useEffect } from "react";
 import { Zap } from "lucide-react";
 import Link from "next/link";
-import { useSettingsStore } from "@/store/settings-store";
+import { useHomePanelsStore } from "@/store/home-panels-store";
 
 export function DealsBar() {
-  const formatPrice = useSettingsStore((s) => s.formatPrice);
+  const dealsBar = useHomePanelsStore((s) => s.dealsBar);
   const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 });
 
   useEffect(() => {
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
+    const end = new Date(dealsBar.countdownEndsAt);
 
     const tick = () => {
       const diff = end.getTime() - Date.now();
-      if (diff <= 0) return;
+      if (diff <= 0) {
+        setTimeLeft({ h: 0, m: 0, s: 0 });
+        return;
+      }
       setTimeLeft({
         h: Math.floor(diff / 3600000),
         m: Math.floor((diff % 3600000) / 60000),
@@ -25,7 +27,9 @@ export function DealsBar() {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [dealsBar.countdownEndsAt]);
+
+  if (!dealsBar.enabled) return null;
 
   const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -35,8 +39,8 @@ export function DealsBar() {
         <div className="flex items-center gap-3">
           <Zap size={20} className="text-gold" />
           <div>
-            <p className="font-semibold text-sm sm:text-base">Today&apos;s Deals — Ends in</p>
-            <p className="text-cream/60 text-xs">Up to 40% off + free shipping over {formatPrice(300)}</p>
+            <p className="font-semibold text-sm sm:text-base">{dealsBar.title}</p>
+            <p className="text-cream/60 text-xs">{dealsBar.subtitle}</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -48,10 +52,10 @@ export function DealsBar() {
             <span className="bg-burgundy px-2 py-1 rounded-sm">{pad(timeLeft.s)}</span>
           </div>
           <Link
-            href="/shop?filter=offers"
+            href={dealsBar.buttonLink}
             className="bg-gold text-charcoal px-5 py-2 text-sm font-semibold hover:bg-gold-light transition-colors whitespace-nowrap"
           >
-            Shop Deals
+            {dealsBar.buttonText}
           </Link>
         </div>
       </div>

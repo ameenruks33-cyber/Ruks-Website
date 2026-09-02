@@ -76,6 +76,10 @@ export default function AdminDashboard() {
               <Package size={24} className="mx-auto text-burgundy mb-2" />
               <p className="text-sm font-medium">Edit Products</p>
             </a>
+            <a href="/admin/panels" className="p-4 border border-cream-dark rounded-sm hover:border-burgundy transition-colors text-center">
+              <TrendingUp size={24} className="mx-auto text-burgundy mb-2" />
+              <p className="text-sm font-medium">Home Panels</p>
+            </a>
             <a href="/admin/settings" className="p-4 border border-cream-dark rounded-sm hover:border-burgundy transition-colors text-center">
               <TrendingUp size={24} className="mx-auto text-burgundy mb-2" />
               <p className="text-sm font-medium">Currency & Settings</p>

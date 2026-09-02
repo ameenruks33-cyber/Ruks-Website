@@ -13,6 +13,7 @@ interface ProductPageProps {
 
 export default function ProductPage({ params }: ProductPageProps) {
   const [slug, setSlug] = useState<string | null>(null);
+  const hydrated = useCatalogStore((s) => s.hydrated);
   const getProductBySlug = useCatalogStore((s) => s.getProductBySlug);
 
   useEffect(() => {
@@ -24,7 +25,12 @@ export default function ProductPage({ params }: ProductPageProps) {
   }
 
   const product = getProductBySlug(slug);
-  if (!product) notFound();
+
+  if (!product && hydrated) notFound();
+
+  if (!product) {
+    return <div className="max-w-7xl mx-auto px-4 py-20 text-center">Loading product...</div>;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 lg:py-12">

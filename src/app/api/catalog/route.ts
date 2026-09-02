@@ -29,7 +29,10 @@ export async function PUT(request: Request) {
     !body.categories &&
     !body.banners &&
     !body.coupons &&
-    !body.settings
+    !body.settings &&
+    !body.homePanels &&
+    !body.marketingPosts &&
+    !body.socialConnections
   ) {
     return NextResponse.json({ error: "No catalog data provided" }, { status: 400 });
   }

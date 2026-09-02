@@ -1,0 +1,28 @@
+# Firebase App Hosting config for RukZa Fashion Hub
+# Secrets are set with: npx -y firebase-tools@latest apphosting:secrets:set SECRET_NAME
+
+runConfig:
+  cpu: 1
+  memoryMiB: 1024
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+
+env:
+  - variable: NEXT_PUBLIC_APP_NAME
+    value: RukZa's Fashion Hub
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: ADMIN_PASSWORD
+    secret: ADMIN_PASSWORD
+
+  - variable: ADMIN_SECRET
+    secret: ADMIN_SECRET
+
+  - variable: AUTH_SECRET
+    secret: AUTH_SECRET
+
+  - variable: WHATSAPP_NOTIFY_PHONE
+    secret: WHATSAPP_NOTIFY_PHONE

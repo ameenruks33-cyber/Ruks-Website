@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
-export const ADMIN_COOKIE = "rukza_admin_session";
-export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+export const ADMIN_COOKIE = "nexcartx_admin_session";
+export const SESSION_MAX_AGE = 60 * 60 * 24; // 24 hours — re-login daily for security
 
 function getAdminPassword(): string {
   return process.env.ADMIN_PASSWORD?.trim() ?? "";

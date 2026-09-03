@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   clearLoginAttempts(ip);
 
   const response = NextResponse.json({ success: true });
-  const cookieOptions = getAdminCookieOptions(60 * 60 * 24 * 7);
+  const cookieOptions = getAdminCookieOptions(60 * 60 * 24);
   response.cookies.set(ADMIN_COOKIE, await createSessionToken(), cookieOptions);
 
   return response;

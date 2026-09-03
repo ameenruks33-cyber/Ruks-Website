@@ -1,6 +1,6 @@
 const attempts = new Map<string, { count: number; resetAt: number }>();
 
-const MAX_ATTEMPTS = 5;
+const MAX_ATTEMPTS = 3;
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 export function getClientIp(request: Request): string {

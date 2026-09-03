@@ -5,9 +5,13 @@ import { ADMIN_COOKIE, verifySessionToken } from "@/lib/admin-auth";
 function withSecurityHeaders(response: NextResponse) {
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("Referrer-Policy", "no-referrer");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+  );
   response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  response.headers.set("Cache-Control", "no-store");
   return response;
 }
 
@@ -22,10 +26,12 @@ export async function middleware(request: NextRequest) {
   // Protect admin API (except login POST)
   if (pathname.startsWith("/api/admin")) {
     if (pathname === "/api/admin/login" && request.method === "POST") {
-      return NextResponse.next();
+      return withSecurityHeaders(NextResponse.next());
     }
     if (!(await requireAdminSession(request))) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return withSecurityHeaders(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      );
     }
     return withSecurityHeaders(NextResponse.next());
   }
@@ -33,7 +39,23 @@ export async function middleware(request: NextRequest) {
   // Protect catalog writes
   if (pathname === "/api/catalog" && request.method === "PUT") {
     if (!(await requireAdminSession(request))) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return withSecurityHeaders(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      );
+    }
+    return withSecurityHeaders(NextResponse.next());
+  }
+
+  // Protect uploads and marketing publish
+  if (pathname === "/api/upload" || pathname === "/api/marketing/publish") {
+    if (pathname === "/api/marketing/publish" && request.method === "GET") {
+      // Cron auth is enforced inside the route (Bearer CRON_SECRET)
+      return withSecurityHeaders(NextResponse.next());
+    }
+    if (!(await requireAdminSession(request))) {
+      return withSecurityHeaders(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      );
     }
     return withSecurityHeaders(NextResponse.next());
   }
@@ -42,8 +64,11 @@ export async function middleware(request: NextRequest) {
   if (pathname === "/api/orders" && request.method === "GET") {
     const orderNumber = request.nextUrl.searchParams.get("orderNumber");
     if (!orderNumber && !(await requireAdminSession(request))) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return withSecurityHeaders(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      );
     }
+    return withSecurityHeaders(NextResponse.next());
   }
 
   // Admin pages
@@ -77,5 +102,7 @@ export const config = {
     "/api/admin/:path*",
     "/api/catalog",
     "/api/orders",
+    "/api/upload",
+    "/api/marketing/publish",
   ],
 };

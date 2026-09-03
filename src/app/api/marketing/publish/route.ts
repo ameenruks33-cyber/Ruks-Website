@@ -66,12 +66,12 @@ export async function POST(request: Request) {
   });
 }
 
-/** Phase 5: cron endpoint for scheduled posts */
+/** Phase 5: cron endpoint for scheduled posts — always requires CRON_SECRET */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
+  const cronSecret = process.env.CRON_SECRET?.trim();
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -99,9 +99,9 @@ export default function AdminCustomersPage() {
           <p className="text-charcoal/60">
             {customers.length} customer{customers.length !== 1 ? "s" : ""}
           </p>
-          <p className="text-xs text-charcoal/40 mt-1">Customers panel v2026-09-02</p>
+          <p className="text-xs text-charcoal/40 mt-1">Customers panel v2026-09-03</p>
         </div>
-        <Button onClick={() => setShowAddForm(true)}>
+        <Button onClick={() => setShowAddForm(true)} className="shrink-0">
           <Plus size={16} />
           Add Customer
         </Button>

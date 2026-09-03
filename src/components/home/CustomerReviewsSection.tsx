@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { Star, MessageSquare, Package } from "lucide-react";
@@ -42,7 +42,7 @@ export function CustomerReviewsSection() {
       comment: review.comment,
       label:
         review.type === "website" || !review.productId
-          ? "RukZa's Fashion Hub"
+          ? "NexCart X"
           : review.productName || "Product",
       type: review.type ?? (review.productId ? "product" : "website"),
       createdAt: review.createdAt,
@@ -158,7 +158,7 @@ export function CustomerReviewsSection() {
           >
             <p className="font-medium text-charcoal">
               {tab === "website"
-                ? "Review RukZa's Fashion Hub"
+                ? "Review NexCart X"
                 : "Review a Product"}
             </p>
 

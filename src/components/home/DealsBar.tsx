@@ -34,26 +34,26 @@ export function DealsBar() {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <section className="bg-charcoal text-cream py-4">
+    <section className="bg-ink text-charcoal py-4 border-y border-burgundy/25">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Zap size={20} className="text-gold" />
           <div>
             <p className="font-semibold text-sm sm:text-base">{dealsBar.title}</p>
-            <p className="text-cream/60 text-xs">{dealsBar.subtitle}</p>
+            <p className="text-charcoal/60 text-xs">{dealsBar.subtitle}</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex gap-2 font-mono text-lg">
+          <div className="flex gap-2 font-mono text-lg text-ink font-bold">
             <span className="bg-burgundy px-2 py-1 rounded-sm">{pad(timeLeft.h)}</span>
-            <span>:</span>
+            <span className="text-burgundy">:</span>
             <span className="bg-burgundy px-2 py-1 rounded-sm">{pad(timeLeft.m)}</span>
-            <span>:</span>
+            <span className="text-burgundy">:</span>
             <span className="bg-burgundy px-2 py-1 rounded-sm">{pad(timeLeft.s)}</span>
           </div>
           <Link
             href={dealsBar.buttonLink}
-            className="bg-gold text-charcoal px-5 py-2 text-sm font-semibold hover:bg-gold-light transition-colors whitespace-nowrap"
+            className="bg-burgundy text-ink px-5 py-2 text-sm font-bold hover:bg-burgundy-dark transition-all btn-press whitespace-nowrap"
           >
             {dealsBar.buttonText}
           </Link>

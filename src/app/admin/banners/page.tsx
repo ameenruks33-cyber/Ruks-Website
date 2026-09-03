@@ -133,7 +133,7 @@ export default function AdminBannersPage() {
               label="Button link"
               value={form.link}
               onChange={(e) => setForm({ ...form, link: e.target.value })}
-              placeholder="/shop or /shop?category=gas-stoves"
+              placeholder="/shop or /shop?category=women-ethnic-wear"
             />
             <div className="flex gap-3 pt-2">
               <Button onClick={handleSave}>

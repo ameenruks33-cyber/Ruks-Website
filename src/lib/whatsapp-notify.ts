@@ -1,4 +1,4 @@
-import type { StoredOrder } from "@/lib/order-types";
+﻿import type { StoredOrder } from "@/lib/order-types";
 
 function formatMoney(amount: number, currency: string): string {
   return `${currency} ${amount.toFixed(2)}`;
@@ -23,7 +23,7 @@ export function formatOrderWhatsAppMessage(order: StoredOrder): string {
     .join(", ");
 
   return [
-    "🛍️ *NEW ORDER - RukZa's Fashion Hub*",
+    "🛍️ *NEW ORDER - NexCart X*",
     "",
     `*Order:* ${order.orderNumber}`,
     `*Date:* ${new Date(order.createdAt).toLocaleString("en-AE")}`,

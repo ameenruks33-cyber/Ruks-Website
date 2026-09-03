@@ -1,9 +1,11 @@
 
-# RukZa's Fashion Hub
+# NexCart X
+
+Online fashion & lifestyle marketplace.
 
 A premium online fashion marketplace built with Next.js, TypeScript, and Tailwind CSS.
 
-**Style for Everyone** — Ladies, Gents, and Children's fashion with a scalable marketplace architecture.
+**Shop the next look** — fashion, lifestyle and everyday essentials.
 
 ## Features (Stage 1)
 

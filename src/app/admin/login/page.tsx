@@ -42,7 +42,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-charcoal flex items-center justify-center px-4">
+    <div className="min-h-screen bg-ink flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-burgundy/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -94,7 +94,7 @@ function LoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-charcoal" />}>
+    <Suspense fallback={<div className="min-h-screen bg-ink" />}>
       <LoginForm />
     </Suspense>
   );

@@ -7,7 +7,7 @@ Write-Host "=== RukZa Auto-Deploy Setup ===" -ForegroundColor Cyan
 Write-Host ""
 
 $projectId = "prj_jVgE6KFVLpNL115R2x6DnCo7mfEE"
-$orgId = "team_JSFALASTsTpSVJhhfE3PLgxz"
+$orgId = "team_JSFALASfsTpSVJhhfE3PLgxz"
 $repo = "ameenruks33-cyber/Ruks-Website"
 
 Write-Host "STEP 1 — Connect Vercel to GitHub (do this in browser)" -ForegroundColor Yellow

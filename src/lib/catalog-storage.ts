@@ -14,6 +14,14 @@ import {
   readCatalogFromBlob,
   writeCatalogToBlob,
 } from "@/lib/blob-catalog-storage";
+import { resolveMarketplaceCategories } from "@/lib/category-resolve";
+import {
+  resolveMarketplaceBanners,
+  resolveMarketplaceCoupons,
+  resolveMarketplaceHomePanels,
+  resolveMarketplaceProducts,
+  resolveMarketplaceSettings,
+} from "@/lib/product-resolve";
 import type { StoreCatalogData, StoreCatalogPatch } from "@/lib/store-data-types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -41,12 +49,17 @@ function normalizeCatalog(parsed: StoreCatalogData): StoreCatalogData {
   return {
     ...getSeedData(),
     ...parsed,
-    products: parsed.products ?? seedProducts,
-    categories: parsed.categories ?? seedCategories,
-    banners: parsed.banners ?? seedBanners,
-    coupons: parsed.coupons ?? seedCoupons,
-    settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
-    homePanels: normalizeHomePanels(parsed.homePanels),
+    products: resolveMarketplaceProducts(parsed.products ?? seedProducts),
+    categories: resolveMarketplaceCategories(parsed.categories ?? seedCategories),
+    banners: resolveMarketplaceBanners(parsed.banners ?? seedBanners),
+    coupons: resolveMarketplaceCoupons(parsed.coupons ?? seedCoupons),
+    settings: resolveMarketplaceSettings({
+      ...DEFAULT_SETTINGS,
+      ...parsed.settings,
+    }),
+    homePanels: resolveMarketplaceHomePanels(
+      normalizeHomePanels(parsed.homePanels)
+    ),
     marketingPosts: parsed.marketingPosts ?? [],
     socialConnections: {
       ...DEFAULT_SOCIAL_CONNECTIONS,
@@ -84,7 +97,9 @@ async function writeCatalogFile(data: StoreCatalogData): Promise<void> {
 
 async function readCatalog(): Promise<StoreCatalogData> {
   if (globalCache.__rukzaCatalogCache__) {
-    return globalCache.__rukzaCatalogCache__;
+    const cached = normalizeCatalog(globalCache.__rukzaCatalogCache__);
+    globalCache.__rukzaCatalogCache__ = cached;
+    return cached;
   }
 
   if (isBlobStorageEnabled()) {
@@ -142,16 +157,20 @@ export async function updateStoreCatalog(
 ): Promise<StoreCatalogData> {
   const current = await readCatalog();
   const next: StoreCatalogData = {
-    products: patch.products ?? current.products,
-    categories: patch.categories ?? current.categories,
-    banners: patch.banners ?? current.banners,
-    coupons: patch.coupons ?? current.coupons,
-    settings: patch.settings
-      ? { ...current.settings, ...patch.settings }
-      : current.settings,
-    homePanels: patch.homePanels
-      ? normalizeHomePanels({ ...current.homePanels, ...patch.homePanels })
-      : current.homePanels,
+    products: resolveMarketplaceProducts(patch.products ?? current.products),
+    categories: resolveMarketplaceCategories(patch.categories ?? current.categories),
+    banners: resolveMarketplaceBanners(patch.banners ?? current.banners),
+    coupons: resolveMarketplaceCoupons(patch.coupons ?? current.coupons),
+    settings: resolveMarketplaceSettings(
+      patch.settings
+        ? { ...current.settings, ...patch.settings }
+        : current.settings
+    ),
+    homePanels: resolveMarketplaceHomePanels(
+      patch.homePanels
+        ? normalizeHomePanels({ ...current.homePanels, ...patch.homePanels })
+        : current.homePanels
+    ),
     marketingPosts: patch.marketingPosts ?? current.marketingPosts,
     socialConnections: patch.socialConnections
       ? { ...current.socialConnections, ...patch.socialConnections }

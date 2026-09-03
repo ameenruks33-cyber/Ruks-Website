@@ -6,10 +6,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary: "bg-burgundy text-cream hover:bg-burgundy-dark shadow-sm",
-  secondary: "bg-gold text-charcoal hover:bg-gold-light shadow-sm",
-  outline: "border-2 border-burgundy text-burgundy hover:bg-burgundy hover:text-cream",
-  ghost: "text-charcoal hover:bg-cream-dark",
+  primary:
+    "bg-burgundy text-ink hover:bg-burgundy-dark shadow-sm btn-press font-semibold tracking-wide",
+  secondary:
+    "bg-gold text-ink hover:bg-gold-light shadow-sm btn-press font-semibold",
+  outline:
+    "border-2 border-burgundy text-burgundy hover:bg-burgundy hover:text-ink btn-press",
+  ghost: "text-charcoal hover:bg-cream-dark hover:text-burgundy",
 };
 
 const sizes = {

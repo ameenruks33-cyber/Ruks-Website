@@ -36,21 +36,6 @@ export interface Product {
   gstRate?: number;
 }
 
-export interface RepairRequest {
-  id: string;
-  productType: string;
-  problem: string;
-  customerName: string;
-  phone: string;
-  address: string;
-  pincode: string;
-  district: string;
-  preferredDate: string;
-  preferredTime: string;
-  description: string;
-  status: "pending" | "confirmed" | "in_progress" | "completed" | "cancelled";
-  createdAt: string;
-}
 
 export interface Category {
   id: string;

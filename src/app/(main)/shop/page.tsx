@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo } from "react";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { ShopCategorySidebar } from "@/components/shop/ShopCategorySidebar";
 import { useCatalogStore } from "@/store/catalog-store";
 
 function ShopContent() {
@@ -25,7 +26,16 @@ function ShopContent() {
     if (filter === "offers") return getOnSaleProducts();
     if (filter === "bestsellers") return products.filter((p) => p.isFeatured);
     return products.filter((p) => p.isActive);
-  }, [category, filter, query, products, getProductsByCategory, searchProducts, getNewArrivals, getOnSaleProducts]);
+  }, [
+    category,
+    filter,
+    query,
+    products,
+    getProductsByCategory,
+    searchProducts,
+    getNewArrivals,
+    getOnSaleProducts,
+  ]);
 
   const pageTitle = query
     ? `Search: "${query}"`
@@ -51,76 +61,8 @@ function ShopContent() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar filters */}
-        <aside className="lg:w-56 flex-shrink-0">
-          <h3 className="font-semibold text-charcoal mb-4 text-sm tracking-wider uppercase">
-            Categories
-          </h3>
-          <ul className="space-y-2">
-            <li>
-              <a
-                href="/shop"
-                className={`text-sm hover:text-burgundy transition-colors ${
-                  !category && !filter ? "text-burgundy font-medium" : "text-charcoal/70"
-                }`}
-              >
-                All Products
-              </a>
-            </li>
-            {categories
-              .filter((c) => !c.parentSlug)
-              .map((cat) => (
-                <li key={cat.id}>
-                  <a
-                    href={`/shop?category=${cat.slug}`}
-                    className={`text-sm hover:text-burgundy transition-colors ${
-                      category === cat.slug ? "text-burgundy font-medium" : "text-charcoal/70"
-                    }`}
-                  >
-                    {cat.name}
-                  </a>
-                </li>
-              ))}
-          </ul>
+        <ShopCategorySidebar activeCategory={category} activeFilter={filter} />
 
-          <h3 className="font-semibold text-charcoal mb-4 mt-8 text-sm tracking-wider uppercase">
-            Filters
-          </h3>
-          <ul className="space-y-2">
-            <li>
-              <a
-                href="/shop?filter=new"
-                className={`text-sm hover:text-burgundy transition-colors ${
-                  filter === "new" ? "text-burgundy font-medium" : "text-charcoal/70"
-                }`}
-              >
-                New Arrivals
-              </a>
-            </li>
-            <li>
-              <a
-                href="/shop?filter=offers"
-                className={`text-sm hover:text-burgundy transition-colors ${
-                  filter === "offers" ? "text-burgundy font-medium" : "text-charcoal/70"
-                }`}
-              >
-                On Sale
-              </a>
-            </li>
-            <li>
-              <a
-                href="/shop?filter=bestsellers"
-                className={`text-sm hover:text-burgundy transition-colors ${
-                  filter === "bestsellers" ? "text-burgundy font-medium" : "text-charcoal/70"
-                }`}
-              >
-                Best Sellers
-              </a>
-            </li>
-          </ul>
-        </aside>
-
-        {/* Product grid */}
         {filteredProducts.length > 0 ? (
           <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6">
             {filteredProducts.map((product) => (
@@ -142,7 +84,11 @@ function ShopContent() {
 
 export default function ShopPage() {
   return (
-    <Suspense fallback={<div className="max-w-7xl mx-auto px-4 py-20 text-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="max-w-7xl mx-auto px-4 py-20 text-center">Loading...</div>
+      }
+    >
       <ShopContent />
     </Suspense>
   );

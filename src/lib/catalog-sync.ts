@@ -6,6 +6,14 @@ import { useHomePanelsStore } from "@/store/home-panels-store";
 import { useMarketingStore } from "@/store/marketing-store";
 import { normalizeHomePanels } from "@/lib/home-panels";
 import { DEFAULT_SOCIAL_CONNECTIONS } from "@/types/marketing";
+import { resolveMarketplaceCategories } from "@/lib/category-resolve";
+import {
+  resolveMarketplaceBanners,
+  resolveMarketplaceCoupons,
+  resolveMarketplaceHomePanels,
+  resolveMarketplaceProducts,
+  resolveMarketplaceSettings,
+} from "@/lib/product-resolve";
 
 type SyncListener = (status: "syncing" | "synced" | "error") => void;
 
@@ -90,17 +98,17 @@ export function getLocalCatalogPayload(): Omit<StoreCatalogData, "updatedAt"> {
 
 export function hydrateStoresFromCatalog(data: StoreCatalogData) {
   useCatalogStore.setState({
-    products: data.products,
-    categories: data.categories,
-    banners: data.banners,
-    coupons: data.coupons,
+    products: resolveMarketplaceProducts(data.products),
+    categories: resolveMarketplaceCategories(data.categories),
+    banners: resolveMarketplaceBanners(data.banners),
+    coupons: resolveMarketplaceCoupons(data.coupons),
     hydrated: true,
   });
   useSettingsStore.setState({
-    ...data.settings,
+    ...resolveMarketplaceSettings(data.settings),
   });
   useHomePanelsStore.getState().setHomePanels(
-    normalizeHomePanels(data.homePanels)
+    resolveMarketplaceHomePanels(normalizeHomePanels(data.homePanels))
   );
 
   const localPosts = useMarketingStore.getState().marketingPosts;

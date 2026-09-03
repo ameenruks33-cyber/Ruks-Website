@@ -11,8 +11,8 @@ export function Badge({ children, variant = "default", className }: BadgeProps) 
     <span
       className={cn(
         "inline-block px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-sm",
-        variant === "sale" && "bg-burgundy text-cream",
-        variant === "new" && "bg-gold text-charcoal",
+        variant === "sale" && "bg-burgundy text-ink",
+        variant === "new" && "bg-gold text-ink",
         variant === "default" && "bg-cream-dark text-charcoal",
         className
       )}

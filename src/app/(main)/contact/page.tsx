@@ -21,7 +21,7 @@ export default function ContactPage() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="text-center mb-10">
         <h1 className="font-display text-4xl font-bold mb-4">Contact Us</h1>
-        <p className="text-charcoal/70">Questions about products, orders or repair service? We&apos;re here to help.</p>
+        <p className="text-charcoal/70">Questions about products or orders? We&apos;re here to help.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Gift, Share2, Copy, Check, Users } from "lucide-react";
@@ -9,7 +9,7 @@ export default function ReferPage() {
   const { storeName, whatsappUrl } = useSettingsStore();
   const [copied, setCopied] = useState(false);
 
-  const referralCode = "RUKZA10";
+  const referralCode = "NCX10";
   const referralLink = typeof window !== "undefined"
     ? `${window.location.origin}?ref=${referralCode}`
     : `/?ref=${referralCode}`;

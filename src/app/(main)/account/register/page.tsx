@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -24,7 +24,7 @@ export default function RegisterPage() {
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <h1 className="font-display text-3xl font-bold text-charcoal mb-2 text-center">Create Account</h1>
-      <p className="text-charcoal/60 text-center mb-8">Join RukZa&apos;s Fashion Hub</p>
+      <p className="text-charcoal/60 text-center mb-8">Join NexCart X</p>
 
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-sm border border-cream-dark space-y-4">
         <Input

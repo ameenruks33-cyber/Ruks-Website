@@ -1,7 +1,7 @@
-{
-  "name": "RukZa's Fashion Hub",
-  "short_name": "RukZa",
-  "description": "Online fashion marketplace — shop ladies, gents & kids fashion",
+﻿{
+  "name": "NexCart X",
+  "short_name": "NexCart X",
+  "description": "NexCart X — shop fashion, lifestyle and everyday essentials online",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FAF7F2",

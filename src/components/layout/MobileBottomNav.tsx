@@ -39,7 +39,7 @@ export function MobileBottomNav() {
             >
               <Icon size={20} />
               {item.label === "Cart" && itemCount > 0 && (
-                <span className="absolute top-1 right-1/4 bg-burgundy text-cream text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-1/4 bg-burgundy text-ink text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                   {itemCount > 9 ? "9+" : itemCount}
                 </span>
               )}

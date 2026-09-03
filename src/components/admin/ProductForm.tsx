@@ -21,6 +21,10 @@ export function ProductForm({ form, categories, onChange }: ProductFormProps) {
   const displayPrice = form.salePrice ? Number(form.salePrice) : Number(form.price) || 0;
   const mainImage = form.images.find((u) => u.trim());
 
+  const parents = categories
+    .filter((c) => !c.parentSlug)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
@@ -38,7 +42,7 @@ export function ProductForm({ form, categories, onChange }: ProductFormProps) {
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="SKU / Model (e.g. NL-GAS-DB201)" value={form.sku} onChange={(e) => set("sku", e.target.value)} />
+            <Input label="SKU / Model" value={form.sku} onChange={(e) => set("sku", e.target.value)} />
             <Input label="Brand" value={form.brandName} onChange={(e) => set("brandName", e.target.value)} />
           </div>
           <div>
@@ -48,18 +52,31 @@ export function ProductForm({ form, categories, onChange }: ProductFormProps) {
               onChange={(e) => set("categorySlug", e.target.value)}
               className="w-full px-4 py-3 border border-cream-dark rounded-sm bg-white focus:outline-none focus:ring-2 focus:ring-burgundy/30"
             >
-              {categories.map((c) => (
-                <option key={c.id} value={c.slug}>
-                  {c.parentSlug ? `— ${c.name}` : c.name}
-                </option>
-              ))}
+              {parents.map((parent) => {
+                const children = categories
+                  .filter((c) => c.parentSlug === parent.slug)
+                  .sort((a, b) => a.sortOrder - b.sortOrder);
+                return (
+                  <optgroup key={parent.id} label={parent.name}>
+                    <option value={parent.slug}>{parent.name} (all)</option>
+                    {children.map((child) => (
+                      <option key={child.id} value={child.slug}>
+                        {child.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })}
             </select>
+            <p className="text-xs text-charcoal/40 mt-1">
+              {categories.length} categories available in admin
+            </p>
           </div>
           <Input
             label="Tags (comma separated — for search)"
             value={form.tags}
             onChange={(e) => set("tags", e.target.value)}
-            placeholder="gas stove, double burner, nl-gas"
+            placeholder="kurti, saree, ethnic, new arrival"
           />
           <div>
             <label className="block text-sm font-medium text-charcoal mb-1.5">Features (one per line)</label>
@@ -67,7 +84,7 @@ export function ProductForm({ form, categories, onChange }: ProductFormProps) {
               value={form.features}
               onChange={(e) => set("features", e.target.value)}
               rows={4}
-              placeholder={"Brass burners\nISI certified\nAuto ignition"}
+              placeholder={"Soft fabric\nComfort fit\nEasy care"}
               className="w-full px-4 py-3 border border-cream-dark rounded-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30"
             />
           </div>

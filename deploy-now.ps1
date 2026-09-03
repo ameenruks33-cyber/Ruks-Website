@@ -36,7 +36,8 @@ Write-Host "Deploying to https://ruks-website.vercel.app ..." -ForegroundColor Y
 Write-Host "This takes 2-4 minutes. Do not close this window." -ForegroundColor Gray
 Write-Host ""
 
-npx vercel deploy --prod --yes --token $Token
+# Correct team scope (typo in old orgId caused Not authorized)
+npx vercel deploy --prod --yes --scope ameenruks33-cybers-projects --token $Token
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""

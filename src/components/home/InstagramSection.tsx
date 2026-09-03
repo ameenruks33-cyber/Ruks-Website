@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Camera } from "lucide-react";
 import Image from "next/image";
@@ -22,7 +22,7 @@ export function InstagramSection() {
           <div className="inline-flex items-center gap-2 text-burgundy mb-3">
             <Camera size={20} />
             <span className="text-sm font-semibold tracking-wider uppercase">
-              @rukzasfashionhub
+              @nexcartx
             </span>
           </div>
           <h2 className="font-display text-3xl lg:text-4xl font-bold text-charcoal mb-3">

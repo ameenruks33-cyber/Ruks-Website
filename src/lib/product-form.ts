@@ -1,4 +1,4 @@
-import type { Product } from "@/types";
+﻿import type { Product } from "@/types";
 import { slugify } from "@/lib/utils";
 
 export interface ProductFormValues {
@@ -25,8 +25,8 @@ export const EMPTY_PRODUCT_FORM: ProductFormValues = {
   price: 0,
   salePrice: "",
   sku: "",
-  categorySlug: "single-burner",
-  brandName: "NL-GAS",
+  categorySlug: "women-ethnic-wear",
+  brandName: "NexCart X",
   images: [""],
   stock: 10,
   warranty: "",

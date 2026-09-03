@@ -13,7 +13,10 @@ import { Button } from "@/components/ui/Button";
 export default function NewProductPage() {
   const router = useRouter();
   const { categories, addProduct } = useCatalogStore();
-  const [form, setForm] = useState({ ...EMPTY_PRODUCT_FORM, categorySlug: categories[0]?.slug ?? "single-burner" });
+  const [form, setForm] = useState({
+    ...EMPTY_PRODUCT_FORM,
+    categorySlug: categories.find((c) => !c.parentSlug)?.slug ?? "women-ethnic-wear",
+  });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 

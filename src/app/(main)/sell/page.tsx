@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { Store, TrendingUp, Users, Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
@@ -23,7 +23,7 @@ export default function SellPage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <Store size={48} className="mx-auto text-gold mb-6" />
           <h1 className="font-display text-4xl lg:text-5xl font-bold mb-4">
-            Sell on RukZa&apos;s Fashion Hub
+            Sell on NexCart X
           </h1>
           <p className="text-cream/80 text-lg mb-8 max-w-2xl mx-auto">
             Join our marketplace like Amazon, Flipkart &amp; Meesho. Start your online business

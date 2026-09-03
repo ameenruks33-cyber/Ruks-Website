@@ -15,6 +15,22 @@ const securityHeaders = [
   },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "frame-ancestors 'none'",
+      "object-src 'none'",
+      "img-src 'self' data: blob: https://images.unsplash.com https://*.public.blob.vercel-storage.com",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "style-src 'self' 'unsafe-inline'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "connect-src 'self' https://*.vercel-storage.com https://api.callmebot.com",
+      "frame-src 'self' https://www.google.com https://maps.google.com",
+      "upgrade-insecure-requests",
+    ].join("; "),
+  },
 ];
 
 const nextConfig: NextConfig = {

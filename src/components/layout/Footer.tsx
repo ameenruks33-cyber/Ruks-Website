@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Share2, Camera, Mail, Phone, MapPin, MessageCircle } from "lucide-react";
 import { NAV_LINKS } from "@/lib/constants";
 import { useSettingsStore } from "@/store/settings-store";
+import { isAllowedMapsEmbed } from "@/lib/safe-url";
 
 export function Footer() {
   const {
@@ -131,7 +132,7 @@ export function Footer() {
           </div>
         </div>
 
-        {googleMapsEmbedUrl && (
+        {googleMapsEmbedUrl && isAllowedMapsEmbed(googleMapsEmbedUrl) && (
           <div className="mt-12 rounded-sm overflow-hidden border border-cream/10 h-48">
             <iframe
               src={googleMapsEmbedUrl}
@@ -141,6 +142,7 @@ export function Footer() {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
+              sandbox="allow-scripts allow-same-origin allow-popups"
               title="Store location map"
             />
           </div>

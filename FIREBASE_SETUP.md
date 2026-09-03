@@ -65,7 +65,7 @@ npx -y firebase-tools@latest apphosting:secrets:set AUTH_SECRET
 ```
 
 When prompted, enter:
-- `ADMIN_PASSWORD` → `RukZa@Admin2026` (or your own password)
+- `ADMIN_PASSWORD` → a strong unique password (never reuse or commit it)
 - `ADMIN_SECRET` → a long random string
 - `AUTH_SECRET` → another long random string
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { ADMIN_COOKIE, verifySessionToken } from "@/lib/admin-auth";
+import { requireHttpsRedirect } from "@/lib/security";
 
 function withSecurityHeaders(response: NextResponse) {
   response.headers.set("X-Frame-Options", "DENY");
@@ -9,6 +10,10 @@ function withSecurityHeaders(response: NextResponse) {
   response.headers.set(
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+  );
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload"
   );
   response.headers.set("X-Robots-Tag", "noindex, nofollow");
   response.headers.set("Cache-Control", "no-store");
@@ -21,9 +26,11 @@ async function requireAdminSession(request: NextRequest) {
 }
 
 export async function middleware(request: NextRequest) {
+  const httpsRedirect = requireHttpsRedirect(request);
+  if (httpsRedirect) return httpsRedirect;
+
   const { pathname } = request.nextUrl;
 
-  // Protect admin API (except login POST)
   if (pathname.startsWith("/api/admin")) {
     if (pathname === "/api/admin/login" && request.method === "POST") {
       return withSecurityHeaders(NextResponse.next());
@@ -36,8 +43,10 @@ export async function middleware(request: NextRequest) {
     return withSecurityHeaders(NextResponse.next());
   }
 
-  // Protect catalog writes
-  if (pathname === "/api/catalog" && request.method === "PUT") {
+  if (
+    (pathname === "/api/catalog" || pathname === "/api/catalog/") &&
+    request.method === "PUT"
+  ) {
     if (!(await requireAdminSession(request))) {
       return withSecurityHeaders(
         NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -46,10 +55,8 @@ export async function middleware(request: NextRequest) {
     return withSecurityHeaders(NextResponse.next());
   }
 
-  // Protect uploads and marketing publish
   if (pathname === "/api/upload" || pathname === "/api/marketing/publish") {
     if (pathname === "/api/marketing/publish" && request.method === "GET") {
-      // Cron auth is enforced inside the route (Bearer CRON_SECRET)
       return withSecurityHeaders(NextResponse.next());
     }
     if (!(await requireAdminSession(request))) {
@@ -60,8 +67,10 @@ export async function middleware(request: NextRequest) {
     return withSecurityHeaders(NextResponse.next());
   }
 
-  // Protect admin order list (not public order tracking)
-  if (pathname === "/api/orders" && request.method === "GET") {
+  if (
+    (pathname === "/api/orders" || pathname === "/api/orders/") &&
+    request.method === "GET"
+  ) {
     const orderNumber = request.nextUrl.searchParams.get("orderNumber");
     if (!orderNumber && !(await requireAdminSession(request))) {
       return withSecurityHeaders(
@@ -71,7 +80,15 @@ export async function middleware(request: NextRequest) {
     return withSecurityHeaders(NextResponse.next());
   }
 
-  // Admin pages
+  if (pathname.startsWith("/api/orders/") && request.method === "PATCH") {
+    if (!(await requireAdminSession(request))) {
+      return withSecurityHeaders(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      );
+    }
+    return withSecurityHeaders(NextResponse.next());
+  }
+
   if (!pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
@@ -89,7 +106,7 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get(ADMIN_COOKIE)?.value;
   if (!(await verifySessionToken(token))) {
     const loginUrl = new URL("/admin/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
+    loginUrl.searchParams.set("from", pathname.startsWith("/admin") ? pathname : "/admin");
     return withSecurityHeaders(NextResponse.redirect(loginUrl));
   }
 
@@ -97,12 +114,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/admin/:path*",
-    "/api/admin/:path*",
-    "/api/catalog",
-    "/api/orders",
-    "/api/upload",
-    "/api/marketing/publish",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|uploads/).*)"],
 };

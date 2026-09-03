@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/admin-api";
 import type { OrderStatus } from "@/lib/order-types";
 import { getOrder, updateOrderStatus } from "@/lib/order-storage";
+import {
+  consumeRateLimit,
+  emailsMatch,
+  getClientIp,
+  toPublicOrder,
+} from "@/lib/security";
 
 const VALID_STATUSES: OrderStatus[] = [
   "PENDING",
@@ -12,17 +18,43 @@ const VALID_STATUSES: OrderStatus[] = [
 ];
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ orderNumber: string }> }
 ) {
   const { orderNumber } = await params;
-  const order = await getOrder(orderNumber);
+  const { searchParams } = new URL(request.url);
+  const email = searchParams.get("email");
 
-  if (!order) {
+  const ip = getClientIp(request);
+  const limit = consumeRateLimit(`order-lookup:${ip}`, 8, 15 * 60 * 1000);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many lookups. Try again later." },
+      { status: 429 }
+    );
+  }
+
+  if (await isAdminRequest()) {
+    const order = await getOrder(orderNumber);
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+    return NextResponse.json({ order });
+  }
+
+  if (!email?.trim()) {
+    return NextResponse.json(
+      { error: "Email is required to track an order" },
+      { status: 400 }
+    );
+  }
+
+  const order = await getOrder(orderNumber);
+  if (!order || !emailsMatch(order.customer.email, email)) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ order });
+  return NextResponse.json({ order: toPublicOrder(order) });
 }
 
 export async function PATCH(

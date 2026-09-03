@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Banner } from "@/types";
 import { useSettingsStore } from "@/store/settings-store";
+import { isSafeInternalHref } from "@/lib/safe-url";
 
 interface HeroBannerProps {
   banners: Banner[];
@@ -71,7 +72,7 @@ export function HeroBanner({ banners }: HeroBannerProps) {
             <p className="text-charcoal/80 text-base sm:text-lg mb-8">{banner.subtitle}</p>
           )}
           <div className="flex flex-wrap gap-3">
-            {banner.link && (
+            {banner.link && isSafeInternalHref(banner.link) && (
               <Link
                 href={banner.link}
                 className="inline-block bg-burgundy text-ink px-8 py-4 text-sm font-bold tracking-wider uppercase hover:bg-burgundy-dark transition-all btn-press"

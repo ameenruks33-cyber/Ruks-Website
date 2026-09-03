@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Package, Search } from "lucide-react";
-import type { StoredOrder } from "@/lib/order-types";
+import type { PublicOrderView } from "@/lib/order-types";
 import { useOrdersStore } from "@/store/orders-store";
 import { useFormatPrice } from "@/components/ui/Price";
 import { Button } from "@/components/ui/Button";
@@ -20,11 +20,11 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState("");
-  const [order, setOrder] = useState<StoredOrder | null>(null);
+  const [email, setEmail] = useState("");
+  const [order, setOrder] = useState<PublicOrderView | null>(null);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const getLocalOrder = useOrdersStore((s) => s.getOrder);
-  const addOrder = useOrdersStore((s) => s.addOrder);
   const formatPrice = useFormatPrice();
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -34,18 +34,47 @@ export default function TrackOrderPage() {
     setOrder(null);
 
     const local = getLocalOrder(orderNumber);
-    if (local) {
-      setOrder(local);
+    if (
+      local &&
+      local.customer.email.trim().toLowerCase() === email.trim().toLowerCase()
+    ) {
+      setOrder({
+        orderNumber: local.orderNumber,
+        status: local.status,
+        createdAt: local.createdAt,
+        items: local.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          size: item.size,
+          color: item.color,
+          image: item.image,
+        })),
+        shipping: {
+          methodName: local.shipping.methodName,
+          cost: local.shipping.cost,
+        },
+        payment: { methodName: local.payment.methodName },
+        totals: {
+          subtotal: local.totals.subtotal,
+          discount: local.totals.discount,
+          shipping: local.totals.shipping,
+          total: local.totals.total,
+          currency: local.totals.currency,
+        },
+        customer: { fullName: local.customer.fullName },
+      });
       setLoading(false);
       return;
     }
 
     try {
-      const res = await fetch(`/api/orders?orderNumber=${encodeURIComponent(orderNumber)}`);
+      const res = await fetch(
+        `/api/orders?orderNumber=${encodeURIComponent(orderNumber)}&email=${encodeURIComponent(email)}`
+      );
       if (res.ok) {
         const data = await res.json();
         setOrder(data.order);
-        addOrder(data.order);
       }
     } catch {
       // handled by empty order state
@@ -61,29 +90,41 @@ export default function TrackOrderPage() {
       <div className="text-center mb-10">
         <Package size={48} className="mx-auto text-burgundy mb-4" />
         <h1 className="font-display text-3xl font-bold text-charcoal mb-2">Track Your Order</h1>
-        <p className="text-charcoal/60">Enter your order number to see delivery status</p>
+        <p className="text-charcoal/60">
+          Enter your order number and the email used at checkout
+        </p>
       </div>
 
-      <form onSubmit={handleSearch} className="flex gap-3 mb-10">
+      <form onSubmit={handleSearch} className="space-y-3 mb-10">
         <Input
-          placeholder="e.g. RZ260812345"
+          placeholder="Order number e.g. NCX2609-A1B2C3"
           value={orderNumber}
           onChange={(e) => {
             setOrderNumber(e.target.value);
             setSearched(false);
           }}
-          className="flex-1"
+          required
         />
-        <Button type="submit" disabled={loading}>
+        <Input
+          type="email"
+          placeholder="Email used at checkout"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setSearched(false);
+          }}
+          required
+        />
+        <Button type="submit" disabled={loading} className="w-full">
           <Search size={16} />
-          {loading ? "..." : "Track"}
+          {loading ? "..." : "Track Order"}
         </Button>
       </form>
 
       {searched && !loading && !order && (
         <div className="bg-white border border-cream-dark rounded-sm p-8 text-center">
           <p className="text-charcoal/60">
-            Order not found. Check your order number or email confirmation.
+            Order not found. Check your order number and email.
           </p>
         </div>
       )}

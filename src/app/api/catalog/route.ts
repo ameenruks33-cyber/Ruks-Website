@@ -2,13 +2,17 @@ import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/admin-api";
 import { getStoreCatalog, updateStoreCatalog, getCatalogStorageMode } from "@/lib/catalog-storage";
 import type { StoreCatalogPatch } from "@/lib/store-data-types";
+import { assertSameOrigin, toPublicCatalog } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const catalog = await getStoreCatalog();
+  const isAdmin = await isAdminRequest();
+  const payload = isAdmin ? catalog : toPublicCatalog(catalog);
+
   return NextResponse.json(
-    { ...catalog, storage: getCatalogStorageMode() },
+    { ...payload, storage: isAdmin ? getCatalogStorageMode() : "live" },
     {
       headers: {
         "Cache-Control": "no-store, max-age=0",
@@ -20,6 +24,10 @@ export async function GET() {
 export async function PUT(request: Request) {
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!assertSameOrigin(request)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const body = (await request.json()) as StoreCatalogPatch;

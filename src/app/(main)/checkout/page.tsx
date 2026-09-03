@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Banknote, Smartphone, CheckCircle, MessageCircle } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
-import { validateCoupon, useCatalogStore } from "@/store/catalog-store";
 import { useOrdersStore } from "@/store/orders-store";
 import { useCustomersStore } from "@/store/customers-store";
 import { useSettingsStore } from "@/store/settings-store";
@@ -18,7 +17,6 @@ import { Input } from "@/components/ui/Input";
 export default function CheckoutPage() {
   const { items, getSubtotal, couponCode, couponDiscount, applyCoupon, removeCoupon, clearCart } =
     useCartStore();
-  const coupons = useCatalogStore((s) => s.coupons);
   const addOrder = useOrdersStore((s) => s.addOrder);
   const upsertFromOrder = useCustomersStore((s) => s.upsertFromOrder);
   const formatPrice = useFormatPrice();
@@ -96,13 +94,23 @@ export default function CheckoutPage() {
     );
   }
 
-  const handleApplyCoupon = () => {
-    const result = validateCoupon(couponInput, subtotal, coupons, currency);
-    if (result.valid) {
-      applyCoupon(couponInput.toUpperCase(), result.discount);
-      setCouponError("");
-    } else {
-      setCouponError(result.message || "Invalid coupon");
+  const handleApplyCoupon = async () => {
+    setCouponError("");
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponInput, subtotal }),
+      });
+      const result = await res.json();
+      if (result.valid) {
+        applyCoupon(couponInput.toUpperCase(), result.discount);
+        setCouponError("");
+      } else {
+        setCouponError(result.message || "Invalid coupon");
+      }
+    } catch {
+      setCouponError("Could not validate coupon");
     }
   };
 
@@ -172,16 +180,40 @@ export default function CheckoutPage() {
       const data = await res.json();
       const order = data.order;
 
-      addOrder(order);
+      addOrder({
+        ...order,
+        customer: {
+          fullName: order.customer?.fullName || form.fullName,
+          email: form.email,
+          phone: form.phone,
+        },
+        address: {
+          line1: form.line1,
+          line2: form.line2,
+          city: form.city,
+          postalCode: form.postalCode,
+          country: form.country,
+        },
+        shipping: {
+          method: shippingMethod,
+          methodName: order.shipping?.methodName || "Delivery",
+          cost: order.shipping?.cost ?? shippingCost,
+        },
+        payment: {
+          method: paymentMethod,
+          methodName: order.payment?.methodName || paymentMethod,
+        },
+        whatsappNotified: false,
+      });
       upsertFromOrder({
         email: form.email,
         name: form.fullName,
         phone: form.phone,
-        orderTotal: total,
+        orderTotal: order.totals?.total ?? total,
         orderDate: new Date(order.createdAt).toLocaleDateString(),
       });
 
-      setOrderNumber(order.orderNumber);
+      setOrderNumber(order.orderNumber || data.orderNumber);
       clearCart();
       setStep("success");
     } catch (error) {

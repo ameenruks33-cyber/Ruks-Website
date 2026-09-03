@@ -24,7 +24,9 @@ export function slugify(text: string): string {
 
 export function generateOrderNumber(): string {
   const date = new Date();
-  const prefix = `RZ${date.getFullYear().toString().slice(-2)}${String(date.getMonth() + 1).padStart(2, "0")}`;
-  const random = Math.floor(Math.random() * 90000) + 10000;
-  return `${prefix}${random}`;
+  const prefix = `NCX${date.getFullYear().toString().slice(-2)}${String(date.getMonth() + 1).padStart(2, "0")}`;
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  const random = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+  return `${prefix}-${random}`;
 }

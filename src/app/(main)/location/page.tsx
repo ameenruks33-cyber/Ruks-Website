@@ -4,6 +4,7 @@ import { MapPin, Phone, Mail, MessageCircle, Navigation } from "lucide-react";
 import { useSettingsStore } from "@/store/settings-store";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+import { isAllowedMapsEmbed } from "@/lib/safe-url";
 
 export default function LocationPage() {
   const {
@@ -78,16 +79,23 @@ export default function LocationPage() {
         </div>
 
         <div className="rounded-sm overflow-hidden border border-cream-dark h-80 lg:h-auto min-h-[320px]">
-          <iframe
-            src={googleMapsEmbedUrl}
-            width="100%"
-            height="100%"
-            style={{ border: 0, minHeight: 320 }}
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title={`${storeName} location`}
-          />
+          {googleMapsEmbedUrl && isAllowedMapsEmbed(googleMapsEmbedUrl) ? (
+            <iframe
+              src={googleMapsEmbedUrl}
+              width="100%"
+              height="100%"
+              style={{ border: 0, minHeight: 320 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              sandbox="allow-scripts allow-same-origin allow-popups"
+              title={`${storeName} location`}
+            />
+          ) : (
+            <div className="h-full min-h-[320px] flex items-center justify-center text-sm text-charcoal/50 p-6 text-center">
+              Map unavailable. Use Get Directions above.
+            </div>
+          )}
         </div>
       </div>
 

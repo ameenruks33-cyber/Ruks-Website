@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, Shield } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { safeAdminRedirectPath } from "@/lib/safe-url";
 
 function LoginForm() {
   const router = useRouter();
@@ -32,7 +33,7 @@ function LoginForm() {
         return;
       }
 
-      const redirect = searchParams.get("from") || "/admin";
+      const redirect = safeAdminRedirectPath(searchParams.get("from"));
       router.push(redirect);
       router.refresh();
     } catch {

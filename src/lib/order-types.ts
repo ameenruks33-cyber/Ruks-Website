@@ -71,3 +71,28 @@ export interface CreateOrderPayload {
   payment: OrderPayment;
   totals: OrderTotals;
 }
+
+/** Safe order view for public tracking (no email/phone/address). */
+export interface PublicOrderView {
+  orderNumber: string;
+  status: OrderStatus;
+  createdAt: string;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    size?: string;
+    color?: string;
+    image?: string;
+  }>;
+  shipping: { methodName: string; cost: number };
+  payment: { methodName: string };
+  totals: {
+    subtotal: number;
+    discount: number;
+    shipping: number;
+    total: number;
+    currency: string;
+  };
+  customer: { fullName: string };
+}

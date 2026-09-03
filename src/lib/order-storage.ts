@@ -4,7 +4,7 @@ import type { CreateOrderPayload, OrderStatus, StoredOrder } from "@/lib/order-t
 import { generateOrderNumber } from "@/lib/utils";
 
 const ORDERS_DIR = process.env.VERCEL
-  ? path.join("/tmp", "rukza-data")
+  ? path.join("/tmp", "nexcartx-data")
   : path.join(process.cwd(), "data");
 const ORDERS_FILE = path.join(ORDERS_DIR, "orders.json");
 
@@ -49,10 +49,16 @@ export async function getOrder(orderNumber: string): Promise<StoredOrder | undef
 
 export async function createOrder(payload: CreateOrderPayload): Promise<StoredOrder> {
   const orders = await readOrders();
+  // Never spread raw payload — orderNumber/status must be server-owned
   const order: StoredOrder = {
     orderNumber: generateOrderNumber(),
     status: "CONFIRMED",
-    ...payload,
+    items: payload.items,
+    customer: payload.customer,
+    address: payload.address,
+    shipping: payload.shipping,
+    payment: payload.payment,
+    totals: payload.totals,
     createdAt: new Date().toISOString(),
     whatsappNotified: false,
   };

@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
 export const ADMIN_COOKIE = "nexcartx_admin_session";
-export const SESSION_MAX_AGE = 60 * 60 * 24; // 24 hours — re-login daily for security
+export const SESSION_MAX_AGE = 60 * 60 * 24; // 24 hours
 
 function getAdminPassword(): string {
   return process.env.ADMIN_PASSWORD?.trim() ?? "";
@@ -20,10 +20,13 @@ function getAdminSecret(): string {
 }
 
 function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  const encoder = new TextEncoder();
+  const bufA = encoder.encode(a);
+  const bufB = encoder.encode(b);
+  const len = Math.max(bufA.length, bufB.length);
+  let result = bufA.length === bufB.length ? 0 : 1;
+  for (let i = 0; i < len; i++) {
+    result |= (bufA[i] ?? 0) ^ (bufB[i] ?? 0);
   }
   return result === 0;
 }
@@ -52,7 +55,8 @@ export async function createSessionToken(): Promise<string> {
   if (!secret) throw new Error("ADMIN_SECRET is not configured");
 
   const expiresAt = Date.now() + SESSION_MAX_AGE * 1000;
-  const payload = String(expiresAt);
+  const jti = crypto.randomUUID();
+  const payload = `${expiresAt}.${jti}`;
   const signature = await hmacSha256(secret, payload);
   return `${payload}.${signature}`;
 }
@@ -60,14 +64,16 @@ export async function createSessionToken(): Promise<string> {
 export async function verifySessionToken(token: string | undefined): Promise<boolean> {
   if (!token || !getAdminSecret()) return false;
 
-  const [expiresAtStr, signature] = token.split(".");
-  if (!expiresAtStr || !signature) return false;
+  const parts = token.split(".");
+  if (parts.length !== 3) return false;
+  const [expiresAtStr, jti, signature] = parts;
+  if (!expiresAtStr || !jti || !signature) return false;
 
   const expiresAt = Number(expiresAtStr);
   if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return false;
 
   try {
-    const expected = await hmacSha256(getAdminSecret(), expiresAtStr);
+    const expected = await hmacSha256(getAdminSecret(), `${expiresAtStr}.${jti}`);
     return timingSafeEqual(signature, expected);
   } catch {
     return false;

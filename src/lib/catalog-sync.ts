@@ -45,6 +45,8 @@ export function pickSiteSettings(state: ReturnType<typeof useSettingsStore.getSt
     email: state.email,
     phone: state.phone,
     address: state.address,
+    district: state.district,
+    gstin: state.gstin,
     currency: state.currency,
     locale: state.locale,
     freeShippingThreshold: state.freeShippingThreshold,
@@ -54,6 +56,9 @@ export function pickSiteSettings(state: ReturnType<typeof useSettingsStore.getSt
     instagramUrl: state.instagramUrl,
     whatsappUrl: state.whatsappUrl,
     topBarMessage: state.topBarMessage,
+    googleMapsEmbedUrl: state.googleMapsEmbedUrl,
+    storeLatitude: state.storeLatitude,
+    storeLongitude: state.storeLongitude,
   };
 }
 

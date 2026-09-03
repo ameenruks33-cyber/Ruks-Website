@@ -1,10 +1,10 @@
-import { Truck, Shield, RotateCcw, Headphones } from "lucide-react";
+import { Truck, Shield, Flame, Headphones } from "lucide-react";
 
 const BADGES = [
-  { icon: Truck, title: "Free Delivery", desc: "On orders above threshold" },
-  { icon: Shield, title: "Secure Payments", desc: "100% protected checkout" },
-  { icon: RotateCcw, title: "Easy Returns", desc: "7-day return policy" },
-  { icon: Headphones, title: "24/7 Support", desc: "WhatsApp & email help" },
+  { icon: Flame, title: "NL-GAS Brand", desc: "Own-brand quality gas stoves" },
+  { icon: Truck, title: "Kerala Delivery", desc: "PIN-code based home delivery" },
+  { icon: Shield, title: "ISI Certified", desc: "Safe regulators & hoses" },
+  { icon: Headphones, title: "WhatsApp Support", desc: "Quick help on every order" },
 ];
 
 export function TrustBadges() {

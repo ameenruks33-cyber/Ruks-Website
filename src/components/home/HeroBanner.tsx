@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Wrench } from "lucide-react";
 import type { Banner } from "@/types";
+import { useSettingsStore } from "@/store/settings-store";
 
 interface HeroBannerProps {
   banners: Banner[];
@@ -12,6 +13,8 @@ interface HeroBannerProps {
 
 export function HeroBanner({ banners }: HeroBannerProps) {
   const [current, setCurrent] = useState(0);
+  const storeName = useSettingsStore((s) => s.storeName);
+  const tagline = useSettingsStore((s) => s.tagline);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -20,7 +23,10 @@ export function HeroBanner({ banners }: HeroBannerProps) {
     return () => clearInterval(timer);
   }, [banners.length]);
 
+  if (banners.length === 0) return null;
+
   const banner = banners[current];
+  const isRepairBanner = banner.link === "/repair";
 
   return (
     <section className="relative h-[50vh] sm:h-[60vh] lg:h-[70vh] overflow-hidden bg-charcoal">
@@ -44,28 +50,39 @@ export function HeroBanner({ banners }: HeroBannerProps) {
       ))}
 
       <div className="relative z-10 h-full max-w-7xl mx-auto px-4 sm:px-6 flex items-center">
-        <div className="max-w-lg animate-fade-in">
+        <div className="max-w-xl animate-fade-in">
           <p className="text-gold text-sm tracking-[0.3em] uppercase mb-3 font-medium">
-            RukZa&apos;s Fashion Hub
+            {storeName}
           </p>
-          <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-cream leading-tight mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-cream leading-tight mb-4">
             {banner.title}
           </h2>
           {banner.subtitle && (
-            <p className="text-cream/80 text-lg mb-8">{banner.subtitle}</p>
+            <p className="text-cream/80 text-base sm:text-lg mb-8">{banner.subtitle}</p>
           )}
-          {banner.link && (
-            <Link
-              href={banner.link}
-              className="inline-block bg-burgundy text-cream px-8 py-4 text-sm font-semibold tracking-wider uppercase hover:bg-burgundy-dark transition-colors"
-            >
-              Shop Now
-            </Link>
-          )}
+          <div className="flex flex-wrap gap-3">
+            {banner.link && (
+              <Link
+                href={banner.link}
+                className="inline-block bg-burgundy text-cream px-8 py-4 text-sm font-semibold tracking-wider uppercase hover:bg-burgundy-dark transition-colors"
+              >
+                {isRepairBanner ? "Book a Repair" : "Shop Now"}
+              </Link>
+            )}
+            {!isRepairBanner && (
+              <Link
+                href="/repair"
+                className="inline-flex items-center gap-2 border border-cream/30 text-cream px-8 py-4 text-sm font-semibold tracking-wider uppercase hover:bg-cream/10 transition-colors"
+              >
+                <Wrench size={16} />
+                Book a Repair
+              </Link>
+            )}
+          </div>
+          <p className="text-cream/50 text-sm mt-6 hidden sm:block">{tagline}</p>
         </div>
       </div>
 
-      {/* Navigation dots */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-2">
         {banners.map((_, i) => (
           <button
@@ -79,7 +96,6 @@ export function HeroBanner({ banners }: HeroBannerProps) {
         ))}
       </div>
 
-      {/* Arrows */}
       <button
         onClick={() => setCurrent((prev) => (prev - 1 + banners.length) % banners.length)}
         className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-2 bg-cream/10 hover:bg-cream/20 text-cream rounded-full backdrop-blur-sm transition-colors hidden sm:block"

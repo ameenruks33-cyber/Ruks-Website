@@ -23,11 +23,33 @@ export interface Product {
   images: string[];
   isFeatured: boolean;
   isNew: boolean;
+  isBestSeller?: boolean;
   isActive: boolean;
   tags: string[];
   variants: ProductVariant[];
   rating: number;
   reviewCount: number;
+  warranty?: string;
+  specifications?: Record<string, string>;
+  features?: string[];
+  hsnCode?: string;
+  gstRate?: number;
+}
+
+export interface RepairRequest {
+  id: string;
+  productType: string;
+  problem: string;
+  customerName: string;
+  phone: string;
+  address: string;
+  pincode: string;
+  district: string;
+  preferredDate: string;
+  preferredTime: string;
+  description: string;
+  status: "pending" | "confirmed" | "in_progress" | "completed" | "cancelled";
+  createdAt: string;
 }
 
 export interface Category {

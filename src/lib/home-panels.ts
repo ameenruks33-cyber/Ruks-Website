@@ -4,7 +4,6 @@ export interface DealsBarPanel {
   subtitle: string;
   buttonText: string;
   buttonLink: string;
-  /** ISO datetime — countdown runs until this time */
   countdownEndsAt: string;
 }
 
@@ -41,29 +40,27 @@ function endOfTodayIso(): string {
 export const DEFAULT_HOME_PANELS: HomePanelsConfig = {
   dealsBar: {
     enabled: true,
-    title: "Today's Deals — Ends in",
-    subtitle: "Up to 40% off + free shipping over AED 300",
-    buttonText: "Shop Deals",
+    title: "NL-GAS Deals — Ends in",
+    subtitle: "Up to 15% off commercial stoves + free delivery over ₹2,499",
+    buttonText: "Shop NL-GAS",
     buttonLink: "/shop?filter=offers",
     countdownEndsAt: endOfTodayIso(),
   },
   promoBanner: {
     enabled: true,
-    label: "Limited Time",
-    title: "Summer Sale — Up to 40% Off",
-    description:
-      "Refresh your wardrobe with our exclusive summer collection. Use code SUMMER25 at checkout.",
-    buttonText: "Shop Offers",
-    buttonLink: "/shop?filter=offers",
+    label: "Restaurant Range",
+    title: "Commercial 4 & 6 Burner Sale",
+    description: "NL-GAS-RS401 and NL-GAS-RS601 at special prices. Use code NLGAS15 at checkout.",
+    buttonText: "View Commercial",
+    buttonLink: "/shop?category=commercial-stoves",
   },
   newsletter: {
     enabled: true,
-    title: "Get Exclusive Deals",
-    description:
-      "Subscribe for new arrivals, sales alerts & fashion tips — like Flipkart & Meesho deals!",
-    emailPlaceholder: "Enter your email",
+    title: "Get NL-GAS Offers",
+    description: "New stove models, spare parts alerts and repair service updates.",
+    emailPlaceholder: "Enter your mobile or email",
     buttonText: "Subscribe",
-    successMessage: "You're subscribed! Check your inbox soon.",
+    successMessage: "You're subscribed! We'll send you the best gas stove deals.",
   },
 };
 
@@ -77,7 +74,6 @@ export function normalizeHomePanels(
   };
 }
 
-/** Convert ISO string to value for `<input type="datetime-local" />` */
 export function toDatetimeLocalValue(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
@@ -85,7 +81,6 @@ export function toDatetimeLocalValue(iso: string): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-/** Convert datetime-local input value to ISO string */
 export function fromDatetimeLocalValue(value: string): string {
   if (!value) return endOfTodayIso();
   const date = new Date(value);

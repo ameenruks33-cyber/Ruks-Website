@@ -2,26 +2,40 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useCatalogStore } from "@/store/catalog-store";
+import { syncCatalogNow } from "@/lib/catalog-sync";
 import { Price } from "@/components/ui/Price";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
 export default function AdminProductsPage() {
-  const products = useCatalogStore((s) => s.products);
+  const { products, deleteProduct } = useCatalogStore();
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Delete "${name}"?`)) return;
+    deleteProduct(id);
+    await syncCatalogNow();
+  };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-display text-3xl font-bold text-charcoal">Products</h1>
-          <p className="text-charcoal/60">{products.length} products — click Edit to change photos, prices & details</p>
+          <p className="text-charcoal/60">{products.length} products — add, edit names, photos, prices &amp; stock</p>
         </div>
-        <Button>
-          <Plus size={18} />
-          Add Product
-        </Button>
+        <Link href="/admin/products/new">
+          <Button>
+            <Plus size={18} />
+            Add Product
+          </Button>
+        </Link>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-100 rounded-sm p-4 mb-6 text-sm text-charcoal/80">
+        <strong>Tip:</strong> Click <strong>Edit</strong> to change product name, upload photos from your computer, set price and stock.
+        Click <strong>Add Product</strong> to list anything new you sell.
       </div>
 
       <div className="bg-white rounded-sm border border-cream-dark overflow-hidden">
@@ -44,7 +58,9 @@ export default function AdminProductsPage() {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="relative w-12 h-12 rounded-sm overflow-hidden bg-cream-dark flex-shrink-0">
-                        <Image src={product.images[0]} alt="" fill className="object-cover" sizes="48px" unoptimized />
+                        {product.images[0] && (
+                          <Image src={product.images[0]} alt="" fill className="object-cover" sizes="48px" unoptimized />
+                        )}
                       </div>
                       <div>
                         <p className="font-medium line-clamp-1">{product.name}</p>
@@ -61,24 +77,37 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="p-4 hidden sm:table-cell">{totalStock}</td>
                   <td className="p-4 hidden sm:table-cell">
-                    <div className="flex gap-1">
-                      {product.isActive && <Badge>Active</Badge>}
+                    <div className="flex gap-1 flex-wrap">
+                      {product.isActive ? <Badge>Active</Badge> : <Badge variant="sale">Hidden</Badge>}
                       {product.isNew && <Badge variant="new">New</Badge>}
                     </div>
                   </td>
                   <td className="p-4 text-right">
-                    <Link href={`/admin/products/${product.id}/edit`}>
-                      <Button variant="outline" size="sm">
-                        <Pencil size={14} />
-                        Edit
+                    <div className="flex justify-end gap-2">
+                      <Link href={`/admin/products/${product.id}/edit`}>
+                        <Button variant="outline" size="sm">
+                          <Pencil size={14} />
+                          Edit
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-500 border-red-200"
+                        onClick={() => handleDelete(product.id, product.name)}
+                      >
+                        <Trash2 size={14} />
                       </Button>
-                    </Link>
+                    </div>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        {products.length === 0 && (
+          <p className="p-8 text-center text-charcoal/50">No products yet. Click Add Product to start.</p>
+        )}
       </div>
     </div>
   );

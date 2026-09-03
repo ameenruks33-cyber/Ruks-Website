@@ -31,7 +31,12 @@ interface CatalogState {
   deleteProduct: (id: string) => void;
 
   updateCategory: (id: string, data: Partial<Category>) => void;
+  addCategory: (category: Category) => void;
+  deleteCategory: (id: string) => void;
+
   updateBanner: (id: string, data: Partial<Banner>) => void;
+  addBanner: (banner: Banner) => void;
+  deleteBanner: (id: string) => void;
 
   addCoupon: (coupon: Coupon) => void;
   updateCoupon: (code: string, data: Partial<Coupon>) => void;
@@ -114,9 +119,26 @@ export const useCatalogStore = create<CatalogState>()((set, get) => ({
 
   updateCategory: (id, data) => {
     set((state) => ({
-      categories: state.categories.map((c) =>
-        c.id === id ? { ...c, ...data } : c
-      ),
+      categories: state.categories.map((c) => {
+        if (c.id !== id) return c;
+        const updated = { ...c, ...data };
+        if (data.name && data.name !== c.name && !data.slug) {
+          updated.slug = slugify(data.name);
+        }
+        return updated;
+      }),
+    }));
+    scheduleCatalogSync();
+  },
+
+  addCategory: (category) => {
+    set((state) => ({ categories: [...state.categories, category] }));
+    scheduleCatalogSync();
+  },
+
+  deleteCategory: (id) => {
+    set((state) => ({
+      categories: state.categories.filter((c) => c.id !== id),
     }));
     scheduleCatalogSync();
   },
@@ -124,6 +146,18 @@ export const useCatalogStore = create<CatalogState>()((set, get) => ({
   updateBanner: (id, data) => {
     set((state) => ({
       banners: state.banners.map((b) => (b.id === id ? { ...b, ...data } : b)),
+    }));
+    scheduleCatalogSync();
+  },
+
+  addBanner: (banner) => {
+    set((state) => ({ banners: [...state.banners, banner] }));
+    scheduleCatalogSync();
+  },
+
+  deleteBanner: (id) => {
+    set((state) => ({
+      banners: state.banners.filter((b) => b.id !== id),
     }));
     scheduleCatalogSync();
   },

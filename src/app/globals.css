@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --cream: #FAF7F2;
-  --cream-dark: #EDE8E0;
-  --burgundy: #722F37;
-  --burgundy-dark: #5A252C;
-  --gold: #C9A962;
-  --gold-light: #D4BC82;
-  --charcoal: #2C2C2C;
+  --cream: #F5F7FA;
+  --cream-dark: #E2E8F0;
+  --burgundy: #1565C0;
+  --burgundy-dark: #0D47A1;
+  --gold: #FF6D00;
+  --gold-light: #FF9E40;
+  --charcoal: #1A2332;
 }
 
 @theme inline {
@@ -18,7 +18,7 @@
   --color-gold: var(--gold);
   --color-gold-light: var(--gold-light);
   --color-charcoal: var(--charcoal);
-  --font-display: var(--font-playfair);
+  --font-display: var(--font-barlow);
   --font-sans: var(--font-inter);
 }
 
@@ -37,7 +37,6 @@ body {
   animation: fade-in 0.6s ease-out forwards;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -49,7 +48,6 @@ body {
   border-radius: 4px;
 }
 
-/* Line clamp utilities */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

@@ -7,9 +7,8 @@ import { DealsBar } from "@/components/home/DealsBar";
 import { TrustBadges } from "@/components/home/TrustBadges";
 import { NewsletterSignup } from "@/components/home/NewsletterSignup";
 import { PromoBanner } from "@/components/home/PromoBanner";
-import { AbayaSection } from "@/components/home/AbayaSection";
+import { FeaturedCategorySection } from "@/components/home/FeaturedCategorySection";
 import { CustomerReviewsSection } from "@/components/home/CustomerReviewsSection";
-import { InstagramSection } from "@/components/home/InstagramSection";
 import { useCatalogStore } from "@/store/catalog-store";
 
 export function HomePageClient() {
@@ -22,18 +21,19 @@ export function HomePageClient() {
   const featured = getFeaturedProducts();
   const newArrivals = getNewArrivals();
   const onSale = getOnSaleProducts();
+  const topCategories = categories.filter((c) => !c.parentSlug).slice(0, 4);
 
   return (
     <>
       <DealsBar />
       <HeroBanner banners={banners} />
       <TrustBadges />
-      <CategoryGrid categories={categories} />
-      <AbayaSection />
+      <CategoryGrid categories={topCategories.length ? topCategories : categories} />
+      <FeaturedCategorySection />
       <ProductGrid
         products={featured}
-        title="Trending Now"
-        subtitle="Our most loved pieces this season"
+        title="NL-GAS Bestsellers"
+        subtitle="Most popular gas stoves in Kerala"
         viewAllHref="/shop?filter=bestsellers"
       />
 
@@ -42,18 +42,17 @@ export function HomePageClient() {
       <ProductGrid
         products={newArrivals}
         title="New Arrivals"
-        subtitle="Fresh styles just dropped"
+        subtitle="Latest models just in stock"
         viewAllHref="/shop?filter=new"
       />
       <ProductGrid
         products={onSale}
-        title="Special Offers"
-        subtitle="Great deals on premium fashion"
+        title="Today's Deals"
+        subtitle="Special prices on NL-GAS stoves"
         viewAllHref="/shop?filter=offers"
       />
       <CustomerReviewsSection />
       <NewsletterSignup />
-      <InstagramSection />
     </>
   );
 }

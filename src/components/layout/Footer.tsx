@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Share2, Camera, Mail, Phone, MapPin } from "lucide-react";
+import { Share2, Camera, Mail, Phone, MapPin, MessageCircle } from "lucide-react";
 import { NAV_LINKS } from "@/lib/constants";
 import { useSettingsStore } from "@/store/settings-store";
 
@@ -12,9 +12,13 @@ export function Footer() {
     email,
     phone,
     address,
+    whatsappUrl,
     facebookUrl,
     instagramUrl,
+    googleMapsEmbedUrl,
   } = useSettingsStore();
+
+  const phoneTel = phone.replace(/\s/g, "");
 
   return (
     <footer className="bg-charcoal text-cream/80 mt-auto">
@@ -42,28 +46,31 @@ export function Footer() {
               >
                 <Camera size={18} />
               </a>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full bg-cream/10 hover:bg-burgundy transition-colors"
+                aria-label="WhatsApp"
+              >
+                <MessageCircle size={18} />
+              </a>
             </div>
           </div>
 
           <div>
             <h4 className="text-cream font-semibold mb-4 tracking-wide">Shop</h4>
             <ul className="space-y-2.5 text-sm">
-              {NAV_LINKS.map((link) => (
+              <li><Link href="/shop" className="hover:text-gold transition-colors">All Products</Link></li>
+              {NAV_LINKS.slice(0, 6).map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="hover:text-gold transition-colors">
                     {link.label}
                   </Link>
                 </li>
               ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-cream font-semibold mb-4 tracking-wide">Grow With Us</h4>
-            <ul className="space-y-2.5 text-sm">
-              <li><Link href="/sell" className="hover:text-gold transition-colors">Sell on RukZa</Link></li>
-              <li><Link href="/refer" className="hover:text-gold transition-colors">Refer &amp; Earn</Link></li>
-              <li><Link href="/account/orders" className="hover:text-gold transition-colors">Track Order</Link></li>
+              <li><Link href="/repair" className="hover:text-gold transition-colors">Repair Service</Link></li>
+              <li><Link href="/location" className="hover:text-gold transition-colors">Store Location</Link></li>
             </ul>
           </div>
 
@@ -71,10 +78,19 @@ export function Footer() {
             <h4 className="text-cream font-semibold mb-4 tracking-wide">Customer Service</h4>
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/account/orders" className="hover:text-gold transition-colors">Track Order</Link></li>
-              <li><Link href="/shipping" className="hover:text-gold transition-colors">Shipping Info</Link></li>
-              <li><Link href="/returns" className="hover:text-gold transition-colors">Returns & Exchanges</Link></li>
+              <li><Link href="/shipping" className="hover:text-gold transition-colors">Shipping Policy</Link></li>
+              <li><Link href="/returns" className="hover:text-gold transition-colors">Return &amp; Refund Policy</Link></li>
+              <li><Link href="/warranty" className="hover:text-gold transition-colors">Warranty</Link></li>
               <li><Link href="/faq" className="hover:text-gold transition-colors">FAQ</Link></li>
               <li><Link href="/contact" className="hover:text-gold transition-colors">Contact Us</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-cream font-semibold mb-4 tracking-wide">Legal</h4>
+            <ul className="space-y-2.5 text-sm">
+              <li><Link href="/terms" className="hover:text-gold transition-colors">Terms &amp; Conditions</Link></li>
+              <li><Link href="/privacy" className="hover:text-gold transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
 
@@ -87,7 +103,13 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone size={16} className="flex-shrink-0" />
-                <span>{phone}</span>
+                <a href={`tel:${phoneTel}`} className="hover:text-gold transition-colors">{phone}</a>
+              </li>
+              <li className="flex items-center gap-2">
+                <MessageCircle size={16} className="flex-shrink-0" />
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">
+                  WhatsApp Support
+                </a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail size={16} className="flex-shrink-0" />
@@ -99,8 +121,23 @@ export function Footer() {
           </div>
         </div>
 
+        {googleMapsEmbedUrl && (
+          <div className="mt-12 rounded-sm overflow-hidden border border-cream/10 h-48">
+            <iframe
+              src={googleMapsEmbedUrl}
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Store location map"
+            />
+          </div>
+        )}
+
         <div className="border-t border-cream/10 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-cream/40">
-          <p>&copy; {new Date().getFullYear()} {storeName}. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {storeName}. All rights reserved. Kerala, India.</p>
           <div className="flex gap-6">
             <Link href="/privacy" className="hover:text-cream/60 transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-cream/60 transition-colors">Terms of Service</Link>

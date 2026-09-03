@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, ShoppingBag, Heart, Truck, Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Minus, Plus, ShoppingBag, Heart, Truck, Shield, MessageCircle, Zap } from "lucide-react";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Price } from "@/components/ui/Price";
@@ -21,6 +22,7 @@ interface ProductDetailProps {
 }
 
 export function ProductDetail({ product }: ProductDetailProps) {
+  const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
     product.variants[0]
@@ -29,8 +31,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const { toggle, isInWishlist } = useWishlistStore();
-  const freeShippingThreshold = useSettingsStore((s) => s.freeShippingThreshold);
-  const formatPrice = useSettingsStore((s) => s.formatPrice);
+  const { freeShippingThreshold, formatPrice, whatsappUrl } = useSettingsStore();
   const inWishlist = isInWishlist(product.id);
 
   const price = product.salePrice ?? product.price;
@@ -58,6 +59,21 @@ export function ProductDetail({ product }: ProductDetailProps) {
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
+  };
+
+  const handleBuyNow = () => {
+    handleAddToCart();
+    router.push("/checkout");
+  };
+
+  const handleWhatsApp = () => {
+    const message = encodeURIComponent(
+      `Hello, I am interested in ${product.name} (SKU: ${product.sku}). Price: ${formatPrice(price)}. Please provide more details.`
+    );
+    const url = whatsappUrl.includes("?")
+      ? `${whatsappUrl}&text=${message}`
+      : `${whatsappUrl}?text=${message}`;
+    window.open(url, "_blank");
   };
 
   const selectSize = (size: string) => {
@@ -145,7 +161,21 @@ export function ProductDetail({ product }: ProductDetailProps) {
           )}
         </div>
 
-        <p className="text-charcoal/70 leading-relaxed mb-8">{product.description}</p>
+        <p className="text-charcoal/70 leading-relaxed mb-6">{product.description}</p>
+
+        {product.warranty && (
+          <p className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-sm mb-6 inline-block">
+            🛡️ {product.warranty}
+          </p>
+        )}
+
+        {product.features && product.features.length > 0 && (
+          <ul className="text-sm text-charcoal/70 space-y-1 mb-6 list-disc list-inside">
+            {product.features.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        )}
 
         {sizes.length > 0 && (
           <div className="mb-6">
@@ -231,38 +261,73 @@ export function ProductDetail({ product }: ProductDetailProps) {
           </div>
         </div>
 
-        <div className="flex gap-3 mb-8">
+        <div className="flex flex-col gap-3 mb-8">
+          <div className="flex gap-3">
+            <Button
+              onClick={handleAddToCart}
+              disabled={!selectedVariant || selectedVariant.stock === 0}
+              className="flex-1"
+              size="lg"
+            >
+              <ShoppingBag size={18} />
+              {added ? "Added to Cart!" : "Add to Cart"}
+            </Button>
+            <button
+              onClick={() =>
+                toggle({
+                  productId: product.id,
+                  slug: product.slug,
+                  name: product.name,
+                  image: product.images[0],
+                  price,
+                })
+              }
+              className={`p-4 border rounded-sm transition-colors ${
+                inWishlist
+                  ? "border-burgundy text-burgundy bg-burgundy/5"
+                  : "border-cream-dark hover:border-burgundy hover:text-burgundy"
+              }`}
+              aria-label="Add to wishlist"
+            >
+              <Heart size={20} className={inWishlist ? "fill-burgundy" : ""} />
+            </button>
+          </div>
           <Button
-            onClick={handleAddToCart}
+            onClick={handleBuyNow}
             disabled={!selectedVariant || selectedVariant.stock === 0}
-            className="flex-1"
+            variant="secondary"
             size="lg"
+            className="w-full"
           >
-            <ShoppingBag size={18} />
-            {added ? "Added to Cart!" : "Add to Cart"}
+            <Zap size={18} />
+            Buy Now
           </Button>
-          <button
-            onClick={() =>
-              toggle({
-                productId: product.id,
-                slug: product.slug,
-                name: product.name,
-                image: product.images[0],
-                price,
-              })
-            }
-            className={`p-4 border rounded-sm transition-colors ${
-              inWishlist
-                ? "border-burgundy text-burgundy bg-burgundy/5"
-                : "border-cream-dark hover:border-burgundy hover:text-burgundy"
-            }`}
-            aria-label="Add to wishlist"
+          <Button
+            onClick={handleWhatsApp}
+            variant="outline"
+            size="lg"
+            className="w-full border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white"
           >
-            <Heart size={20} className={inWishlist ? "fill-burgundy" : ""} />
-          </button>
+            <MessageCircle size={18} />
+            Order on WhatsApp
+          </Button>
         </div>
 
         <ShareProduct productName={product.name} productSlug={product.slug} price={price} />
+
+        {product.specifications && Object.keys(product.specifications).length > 0 && (
+          <div className="pt-6 border-t border-cream-dark mt-6">
+            <h3 className="font-semibold mb-3">Specifications</h3>
+            <dl className="grid grid-cols-2 gap-2 text-sm">
+              {Object.entries(product.specifications).map(([key, value]) => (
+                <div key={key} className="contents">
+                  <dt className="text-charcoal/50">{key}</dt>
+                  <dd className="font-medium">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4 pt-6 border-t border-cream-dark mt-6">
           <div className="flex items-center gap-3">

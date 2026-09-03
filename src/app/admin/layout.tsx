@@ -15,12 +15,14 @@ import {
   LogOut,
   LayoutTemplate,
   Megaphone,
+  Wrench,
 } from "lucide-react";
 
 const NAV = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
   { icon: Package, label: "Products", href: "/admin/products" },
   { icon: ShoppingCart, label: "Orders", href: "/admin/orders" },
+  { icon: Wrench, label: "Repair Requests", href: "/admin/repair" },
   { icon: Users, label: "Customers", href: "/admin/customers" },
   { icon: Tag, label: "Categories", href: "/admin/categories" },
   { icon: Tag, label: "Coupons", href: "/admin/coupons" },
@@ -51,22 +53,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="w-64 bg-charcoal text-cream flex-shrink-0 hidden lg:flex flex-col">
         <div className="p-6 border-b border-cream/10">
           <Link href="/admin" className="font-display text-xl font-bold text-cream">
-            RukZa Admin
+            NL Gas Admin
           </Link>
           <p className="text-xs text-cream/40 mt-1">Private — Owner Only</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm text-cream/70 hover:text-cream hover:bg-cream/10 transition-colors"
-            >
-              <item.icon size={18} />
-              {item.label}
-            </Link>
-          ))}
+          {NAV.map((item) => {
+            const active = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm transition-colors ${
+                  active
+                    ? "bg-burgundy/20 text-cream font-medium"
+                    : "text-cream/70 hover:text-cream hover:bg-cream/10"
+                }`}
+              >
+                <item.icon size={18} />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-cream/10 space-y-1">
@@ -90,7 +99,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white border-b border-cream-dark px-6 py-4 flex items-center justify-between">
           <Link href="/admin" className="font-display text-lg font-bold text-burgundy lg:hidden">
-            RukZa Admin
+            NL Gas Admin
           </Link>
           <p className="hidden lg:block text-xs text-charcoal/40">
             Confidential admin area — not visible to customers

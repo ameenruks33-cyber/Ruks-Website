@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { CreditCard, Banknote, Smartphone, CheckCircle } from "lucide-react";
+import { Banknote, Smartphone, CheckCircle, MessageCircle } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import { validateCoupon, useCatalogStore } from "@/store/catalog-store";
 import { useOrdersStore } from "@/store/orders-store";
@@ -11,6 +11,7 @@ import { useCustomersStore } from "@/store/customers-store";
 import { useSettingsStore } from "@/store/settings-store";
 import { useFormatPrice } from "@/components/ui/Price";
 import { PAYMENT_METHODS } from "@/lib/constants";
+import { checkPincodeDelivery } from "@/lib/delivery";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -29,18 +30,20 @@ export default function CheckoutPage() {
   } = useSettingsStore();
 
   const shippingMethods = [
-    { id: "standard", name: "Standard Delivery", price: standardShippingPrice, days: "3-5 business days" },
+    { id: "standard", name: "Kerala Home Delivery", price: standardShippingPrice, days: "2-4 business days" },
     { id: "express", name: "Express Delivery", price: expressShippingPrice, days: "1-2 business days" },
-    { id: "pickup", name: "Store Pickup", price: 0, days: "Same day" },
+    { id: "pickup", name: "Store Pickup", price: 0, days: "Same day from shop" },
   ];
   const [step, setStep] = useState<"details" | "payment" | "success">("details");
   const [shippingMethod, setShippingMethod] = useState("standard");
-  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [paymentMethod, setPaymentMethod] = useState("cod");
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [orderError, setOrderError] = useState("");
+  const [pincodeStatus, setPincodeStatus] = useState("");
+  const [pincodeCharge, setPincodeCharge] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     email: "",
@@ -49,17 +52,40 @@ export default function CheckoutPage() {
     line1: "",
     line2: "",
     city: "",
+    district: "",
     postalCode: "",
-    country: "UAE",
+    state: "Kerala",
+    country: "India",
   });
 
   const subtotal = getSubtotal();
   const shipping = shippingMethods.find((m) => m.id === shippingMethod);
-  const shippingCost =
-    subtotal >= freeShippingThreshold && shippingMethod === "standard"
+  const baseShipping =
+    shippingMethod === "pickup"
       ? 0
-      : (shipping?.price ?? standardShippingPrice);
+      : pincodeCharge ?? shipping?.price ?? standardShippingPrice;
+  const shippingCost =
+    shippingMethod !== "pickup" &&
+    subtotal >= freeShippingThreshold &&
+    shippingMethod === "standard"
+      ? 0
+      : baseShipping;
   const total = subtotal - couponDiscount + shippingCost;
+
+  const handlePincodeCheck = (pincode: string) => {
+    setForm((f) => ({ ...f, postalCode: pincode }));
+    if (pincode.length === 6) {
+      const result = checkPincodeDelivery(pincode);
+      setPincodeStatus(result.message);
+      setPincodeCharge(result.available ? result.deliveryCharge : null);
+      if (result.district && !form.district) {
+        setForm((f) => ({ ...f, district: result.district!.split(" / ")[0] }));
+      }
+    } else {
+      setPincodeStatus("");
+      setPincodeCharge(null);
+    }
+  };
 
   if (items.length === 0 && step !== "success") {
     return (
@@ -107,7 +133,9 @@ export default function CheckoutPage() {
         line1: form.line1,
         line2: form.line2 || undefined,
         city: form.city,
+        district: form.district || undefined,
         postalCode: form.postalCode || undefined,
+        state: form.state,
         country: form.country,
       },
       shipping: {
@@ -184,9 +212,9 @@ export default function CheckoutPage() {
   }
 
   const paymentIcons: Record<string, React.ReactNode> = {
-    card: <CreditCard size={20} />,
-    apple_pay: <Smartphone size={20} />,
+    razorpay: <Smartphone size={20} />,
     cod: <Banknote size={20} />,
+    whatsapp: <MessageCircle size={20} />,
   };
 
   return (
@@ -255,17 +283,37 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <Input
-                    label="City"
+                    label="City / Town"
                     required
                     value={form.city}
                     onChange={(e) => setForm({ ...form, city: e.target.value })}
                   />
                   <Input
-                    label="Postal Code"
+                    label="District"
+                    value={form.district}
+                    onChange={(e) => setForm({ ...form, district: e.target.value })}
+                    placeholder="Ernakulam"
+                  />
+                  <Input
+                    label="PIN Code"
+                    required
                     value={form.postalCode}
-                    onChange={(e) => setForm({ ...form, postalCode: e.target.value })}
+                    onChange={(e) => handlePincodeCheck(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="682001"
+                    maxLength={6}
+                  />
+                  <Input
+                    label="State"
+                    value={form.state}
+                    onChange={(e) => setForm({ ...form, state: e.target.value })}
+                    readOnly
                   />
                 </div>
+                {pincodeStatus && (
+                  <p className={`text-sm mt-3 ${pincodeCharge !== null ? "text-green-700" : "text-amber-700"}`}>
+                    {pincodeStatus}
+                  </p>
+                )}
               </section>
 
               <section className="bg-white p-6 rounded-sm border border-cream-dark">
@@ -341,19 +389,21 @@ export default function CheckoutPage() {
                 </div>
               </section>
 
-              {paymentMethod === "card" && (
+              {paymentMethod === "razorpay" && (
                 <section className="bg-white p-6 rounded-sm border border-cream-dark">
-                  <h2 className="font-semibold text-lg mb-6">Card Details</h2>
-                  <p className="text-sm text-charcoal/50 mb-4">
-                    Payment integration (Stripe/PayTabs) will be connected here in production.
+                  <h2 className="font-semibold text-lg mb-4">Online Payment</h2>
+                  <p className="text-sm text-charcoal/50">
+                    Razorpay integration (UPI, cards, net banking) will be connected here.
+                    For now, your order will be saved and we&apos;ll send a payment link on WhatsApp.
                   </p>
-                  <div className="grid grid-cols-1 gap-4">
-                    <Input label="Card Number" placeholder="4242 4242 4242 4242" />
-                    <div className="grid grid-cols-2 gap-4">
-                      <Input label="Expiry" placeholder="MM/YY" />
-                      <Input label="CVC" placeholder="123" />
-                    </div>
-                  </div>
+                </section>
+              )}
+
+              {paymentMethod === "whatsapp" && (
+                <section className="bg-white p-6 rounded-sm border border-cream-dark">
+                  <p className="text-sm text-charcoal/70">
+                    After placing the order, we&apos;ll confirm availability and payment details on WhatsApp.
+                  </p>
                 </section>
               )}
 

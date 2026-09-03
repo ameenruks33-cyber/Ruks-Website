@@ -40,7 +40,22 @@ export default function AdminDashboard() {
   return (
     <div>
       <h1 className="font-display text-3xl font-bold text-charcoal mb-2">Dashboard</h1>
-      <p className="text-charcoal/60 mb-8">Welcome to RukZa&apos;s Fashion Hub admin panel</p>
+      <p className="text-charcoal/60 mb-8">Manage your entire shop from here — no developer needed</p>
+
+      <div className="bg-blue-50 border border-blue-100 rounded-sm p-5 mb-8">
+        <h2 className="font-semibold text-charcoal mb-3">What you can change yourself</h2>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-charcoal/80">
+          <li>✅ <a href="/admin/products/new" className="text-burgundy hover:underline">Add new products</a> — any item you sell</li>
+          <li>✅ <a href="/admin/products" className="text-burgundy hover:underline">Edit names, prices, stock</a></li>
+          <li>✅ Upload photos from your computer</li>
+          <li>✅ <a href="/admin/banners" className="text-burgundy hover:underline">Homepage banner pictures</a></li>
+          <li>✅ <a href="/admin/categories" className="text-burgundy hover:underline">Categories &amp; photos</a></li>
+          <li>✅ <a href="/admin/settings" className="text-burgundy hover:underline">Shop name, phone, address</a></li>
+          <li>✅ <a href="/admin/panels" className="text-burgundy hover:underline">Deals bar &amp; offers text</a></li>
+          <li>✅ <a href="/admin/coupons" className="text-burgundy hover:underline">Discount coupons</a></li>
+        </ul>
+        <p className="text-xs text-charcoal/50 mt-3">After every change click <strong>Save &amp; Publish</strong> — updates go live on the website.</p>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {STATS.map((stat) => (
@@ -72,6 +87,10 @@ export default function AdminDashboard() {
         <div className="bg-white p-6 rounded-sm border border-cream-dark">
           <h2 className="font-semibold text-lg mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
+            <a href="/admin/products/new" className="p-4 border border-cream-dark rounded-sm hover:border-burgundy transition-colors text-center">
+              <Package size={24} className="mx-auto text-burgundy mb-2" />
+              <p className="text-sm font-medium">Add Product</p>
+            </a>
             <a href="/admin/products" className="p-4 border border-cream-dark rounded-sm hover:border-burgundy transition-colors text-center">
               <Package size={24} className="mx-auto text-burgundy mb-2" />
               <p className="text-sm font-medium">Edit Products</p>

@@ -115,10 +115,14 @@ export default function AdminMarketingPage() {
         return;
       }
 
+      // Stay on this page — never navigate to /admin/marketing/[id]
+      // (that old route hung forever on "Loading...").
       setShowProductPicker(false);
       setTab("draft");
       setEditingPost(post);
-      void syncCatalogNow();
+      void syncCatalogNow().catch(() => {
+        // Editor still works offline; sync can retry later.
+      });
     } catch (error) {
       setCreateError(
         error instanceof Error ? error.message : "Something went wrong creating the post."
@@ -134,7 +138,7 @@ export default function AdminMarketingPage() {
           <p className="text-charcoal/60">
             Product → AI content → Your approval → Publish to Instagram &amp; WhatsApp
           </p>
-          <p className="text-xs text-charcoal/40 mt-1">Panel version: 2026-09-02-b</p>
+          <p className="text-xs text-charcoal/40 mt-1">Panel version: 2026-09-03-fix</p>
         </div>
         <div className="flex gap-3">
           <Link href="/admin/marketing/connections">

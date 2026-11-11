@@ -38,7 +38,7 @@ jobs:
 
       - name: Checkout
         if: steps.method.outputs.use_cli == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
         if: steps.method.outputs.use_cli == 'true'
